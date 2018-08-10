@@ -11,7 +11,6 @@ import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import ch.awae.netcode.exception.ConnectionException;
 import lombok.Getter;
 
 final class NetcodeClientImpl extends Thread implements NetcodeClient {

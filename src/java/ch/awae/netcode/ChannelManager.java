@@ -6,8 +6,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import ch.awae.netcode.exception.ConnectionException;
-
 final class ChannelManager {
 
 	private final Predicate<String> appIdValidator;

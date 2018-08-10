@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import ch.awae.netcode.exception.ConnectionException;
-
 final class Channel {
 
 	private final ChannelConfiguration config;

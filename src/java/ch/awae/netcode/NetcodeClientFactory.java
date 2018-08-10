@@ -10,7 +10,6 @@ import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
-import ch.awae.netcode.exception.ConnectionException;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
