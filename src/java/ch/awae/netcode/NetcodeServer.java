@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-final class NetcodeServer extends Thread {
+public final class NetcodeServer extends Thread {
 
 	private final ServerSocket serverSocket;
 	private final AtomicBoolean open = new AtomicBoolean(true);
