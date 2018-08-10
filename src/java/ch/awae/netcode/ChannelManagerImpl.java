@@ -6,6 +6,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import ch.awae.netcode.exception.ConnectionException;
+
 final class ChannelManagerImpl implements ChannelManager {
 
 	private final Predicate<String> appIdValidator;
@@ -31,16 +33,16 @@ final class ChannelManagerImpl implements ChannelManager {
 	}
 
 	@Override
-	public Channel getChannel(String appId, String channelId) {
+	public Channel getChannel(String appId, String channelId) throws ConnectionException {
 		if (!appIdValidator.test(appId))
-			throw new IllegalArgumentException();
+			throw new ConnectionException("invalid application id: '" + appId + "'");
 		return channels.get().get(appId + "/" + channelId);
 	}
 
 	@Override
-	public Channel createChannel(String appId, ChannelConfiguration config) {
+	public Channel createChannel(String appId, ChannelConfiguration config) throws ConnectionException {
 		if (!appIdValidator.test(appId))
-			throw new IllegalArgumentException();
+			throw new ConnectionException("invalid application id: '" + appId + "'");
 		Channel c;
 		while (true) {
 			String id = channelIdProvider.get();

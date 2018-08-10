@@ -8,6 +8,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+import ch.awae.netcode.exception.ConnectionException;
 import lombok.Getter;
 
 final class NetcodeClientImpl extends Thread implements NetcodeClient {
@@ -19,6 +20,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	private ChannelConfiguration config;
 	private final MessageHandler messageHandler;
 	private final Object WRITE_LOCK = new Object();
+	private List<String> users = new ArrayList<>();
 
 	public NetcodeClientImpl(Socket s, MessageHandler messageHandler) throws IOException {
 		this.messageHandler = messageHandler;
@@ -32,7 +34,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 		}
 	}
 
-	public void open(NetcodeHandshakeRequest request) throws IOException {
+	public void open(NetcodeHandshakeRequest request) throws IOException, ConnectionException {
 		try {
 			out.println(Parser.pojo2json(request));
 			out.flush();
@@ -49,6 +51,10 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 					for (String user : gm.getUsers())
 						messageHandler.clientJoined(user);
 					break;
+				} else if (msg.isManagementMessage() && msg.getPayload() instanceof Throwable) {
+					if (msg.getPayload() instanceof ConnectionException)
+						throw new ConnectionException(((ConnectionException) msg.getPayload()).getMessage());
+					throw new RuntimeException((Throwable) msg.getPayload());
 				} else {
 					backlog.add(msg);
 				}
@@ -68,13 +74,16 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	}
 
 	private void process(MessageImpl m) {
-		//System.out.println(" > processing " + m);
 		if (m.isManagementMessage() && m.getPayload() instanceof UserChange) {
 			UserChange data = (UserChange) m.getPayload();
-			if (data.isJoined())
+			if (data.isJoined()) {
+				if (!users.contains(data.getUserId()))
+					users.add(data.getUserId());
 				messageHandler.clientJoined(data.getUserId());
-			else
+			} else {
+				users.remove(data.getUserId());
 				messageHandler.clientLeft(data.getUserId());
+			}
 		} else {
 			messageHandler.handleMessage(m);
 		}
@@ -90,9 +99,12 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 		try {
 			while (!Thread.interrupted()) {
 				try {
-					process(Parser.json2pojo(in.readLine(), MessageImpl.class));
+					String m = in.readLine();
+					if (m == null)
+						continue;
+					process(Parser.json2pojo(m, MessageImpl.class));
 				} catch (IOException e) {
-					e.printStackTrace();
+					break;
 				}
 			}
 		} finally {
@@ -115,6 +127,10 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 			out.println(Parser.pojo2json(MessageFactory.normalMessage(userId, payload)));
 			out.flush();
 		}
+	}
+
+	public String[] getUsers() {
+		return users.toArray(new String[0]);
 	}
 
 	@Override

@@ -11,6 +11,7 @@ import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
+import ch.awae.netcode.exception.ConnectionException;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -46,14 +47,14 @@ public final class NetcodeClientFactory {
 		this.securityMode = securityMode;
 	}
 
-	public NetcodeClient createChannel(String userId, ChannelConfiguration configuration) throws IOException {
+	public NetcodeClient createChannel(String userId, ChannelConfiguration configuration) throws IOException, ConnectionException {
 		Objects.requireNonNull(messageHandler);
 		NetcodeClientImpl client = initSocket();
 		client.open(new NetcodeHandshakeRequest(appId, null, userId, true, configuration));
 		return client;
 	}
 
-	public NetcodeClient joinChannel(String userId, String channelId) throws IOException {
+	public NetcodeClient joinChannel(String userId, String channelId) throws IOException, ConnectionException {
 		Objects.requireNonNull(messageHandler);
 		NetcodeClientImpl client = initSocket();
 		client.open(new NetcodeHandshakeRequest(appId, channelId, userId, false, null));

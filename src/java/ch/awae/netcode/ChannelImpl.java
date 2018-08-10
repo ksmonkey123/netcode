@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import ch.awae.netcode.exception.ConnectionException;
+
 final class ChannelImpl implements Channel {
 
 	private final ChannelConfiguration config;
@@ -22,18 +24,18 @@ final class ChannelImpl implements Channel {
 	}
 
 	@Override
-	public synchronized void join(String userId, ClientHandler handler) throws IOException {
+	public synchronized void join(String userId, ClientHandler handler) throws IOException, ConnectionException {
 		if (!open.get())
 			throw new IllegalStateException();
 		int count = member.incrementAndGet();
 		if (count > config.getMaxClients()) {
 			member.decrementAndGet();
-			throw new IllegalStateException();
+			throw new ConnectionException("channel limit reached: " + config.getMaxClients());
 		}
 		ClientHandler old = clients.putIfAbsent(userId, handler);
 		if (old != null) {
 			member.decrementAndGet();
-			throw new IllegalArgumentException();
+			throw new ConnectionException("duplicate username: '" + userId + "'");
 		}
 		String[] users = clients.keySet().toArray(new String[0]);
 		handler.send(MessageFactory.serverMessage(new GreetingMessage(config, users)));
@@ -45,7 +47,7 @@ final class ChannelImpl implements Channel {
 		ClientHandler client = clients.remove(userId);
 		if (client == null)
 			return;
-		client.interrupt();
+		client.close();
 		send(MessageFactory.serverMessage(new UserChange(userId, false)));
 		if (member.decrementAndGet() <= 0) {
 			owner.closeChannel(appId, config.getChannelId());

@@ -13,5 +13,7 @@ public interface NetcodeClient {
 	String getUserId();
 
 	ChannelConfiguration getChannelConfiguration();
+	
+	String[] getUsers();
 
 }

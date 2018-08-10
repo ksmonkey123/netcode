@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+import ch.awae.netcode.exception.ConnectionException;
 import lombok.Getter;
 
 class ClientHandler extends Thread {
@@ -38,18 +39,22 @@ class ClientHandler extends Thread {
 				channel.quit(userId);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			try {
+				out.println(Parser.pojo2json(MessageFactory.serverMessage(e)));
+				out.flush();
 				socket.close();
 			} catch (IOException e2) {
-				e.printStackTrace();
+				e2.printStackTrace();
 			}
 		}
 	}
 
 	private void runLoop() throws IOException {
 		while (!Thread.interrupted()) {
-			MessageImpl msg = Parser.json2pojo(in.readLine(), MessageImpl.class);
+			String l = in.readLine();
+			if (l == null)
+				break;
+			MessageImpl msg = Parser.json2pojo(l, MessageImpl.class);
 			if (Thread.interrupted())
 				break;
 			if (!msg.isManagementMessage())
@@ -62,14 +67,20 @@ class ClientHandler extends Thread {
 		out.flush();
 	}
 
-	private Channel performHandshake() throws IOException {
+	private Channel performHandshake() throws IOException, ConnectionException {
 		NetcodeHandshakeRequest request = Parser.json2pojo(in.readLine(), NetcodeHandshakeRequest.class);
 		this.userId = request.getUserId();
-		Channel channel = request.isMaster()
-				? manager.createChannel(request.getAppId(), request.getConfig())
+		Channel channel = request.isMaster() ? manager.createChannel(request.getAppId(), request.getConfig())
 				: manager.getChannel(request.getAppId(), request.getChannelId());
+		if (channel == null)
+			throw new ConnectionException("unknown channel id: '" + request.getChannelId() + "'");
 		channel.join(request.getUserId(), this);
 		return channel;
+	}
+
+	public void close() throws IOException {
+		this.interrupt();
+		socket.close();
 	};
 
 }

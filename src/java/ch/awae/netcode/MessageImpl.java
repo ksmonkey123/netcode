@@ -14,8 +14,8 @@ import lombok.ToString;
 
 @Setter
 @Getter
-@AllArgsConstructor
 @ToString
+@AllArgsConstructor
 @NoArgsConstructor
 final class MessageImpl implements Message {
 	private String userId, targetId;

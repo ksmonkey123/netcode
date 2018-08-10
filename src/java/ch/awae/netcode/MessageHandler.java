@@ -1,11 +1,14 @@
 package ch.awae.netcode;
 
+@FunctionalInterface
 public interface MessageHandler {
 
 	void handleMessage(Message msg);
-	
-	void clientJoined(String userId);
-	
-	void clientLeft(String userId);
-	
+
+	default void clientJoined(String userId) {
+	}
+
+	default void clientLeft(String userId) {
+	}
+
 }
