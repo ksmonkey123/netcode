@@ -13,15 +13,15 @@ final class Parser {
 
 	private final static ObjectMapper mapper = new ObjectMapper();
 
-	public static String pojo2json(Object object) throws IOException {
+	static String pojo2json(Object object) throws IOException {
 		return mapper.writeValueAsString(object);
 	}
 
-	public static <T> T json2pojo(String string, Class<T> type) throws IOException {
+	static <T> T json2pojo(String string, Class<T> type) throws IOException {
 		return mapper.readValue(string, type);
 	}
 
-	public static byte[] pojo2array(Serializable object) throws IOException {
+	static byte[] pojo2array(Serializable object) throws IOException {
 		try (ByteArrayOutputStream bo = new ByteArrayOutputStream();
 				ObjectOutputStream so = new ObjectOutputStream(bo)) {
 			so.writeObject(object);
@@ -30,15 +30,11 @@ final class Parser {
 		}
 	}
 
-	public static Object array2pojo(byte[] array) throws IOException, ClassNotFoundException {
+	static Object array2pojo(byte[] array) throws IOException, ClassNotFoundException {
 		try (ByteArrayInputStream bi = new ByteArrayInputStream(array);
 				ObjectInputStream si = new ObjectInputStream(bi)) {
 			return si.readObject();
 		}
-	}
-
-	public static <T> T array2pojo(byte[] array, Class<T> type) throws ClassNotFoundException, IOException {
-		return type.cast(array2pojo(array));
 	}
 
 }

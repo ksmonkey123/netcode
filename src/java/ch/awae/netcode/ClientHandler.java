@@ -8,7 +8,7 @@ import java.net.Socket;
 
 import lombok.Getter;
 
-class ClientHandler extends Thread {
+final class ClientHandler extends Thread {
 
 	private final Socket socket;
 	private final ChannelManager manager;

@@ -37,14 +37,14 @@ final class MessageImpl implements Message {
 	private boolean privateMessage, managementMessage;
 
 	@JsonIgnore
-	private Object payload;
+	private Serializable payload;
 
 	public byte[] getData() throws IOException {
-		return Parser.pojo2array((Serializable) payload);
+		return Parser.pojo2array(payload);
 	}
 
 	public void setData(byte[] array) throws ClassNotFoundException, IOException {
-		payload = Parser.array2pojo(array);
+		payload = (Serializable) Parser.array2pojo(array);
 	}
 
 }
@@ -74,7 +74,7 @@ class NetcodeHandshakeRequest {
 	}
 
 	public void setData(byte[] array) throws ClassNotFoundException, IOException {
-		config = Parser.array2pojo(array, ChannelConfiguration.class);
+		config = (ChannelConfiguration) Parser.array2pojo(array);
 	}
 
 }

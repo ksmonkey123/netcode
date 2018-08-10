@@ -31,18 +31,23 @@ public final class NetcodeServerFactory {
 	@Getter(AccessLevel.NONE)
 	@Setter(AccessLevel.NONE)
 	private List<Consumer<ServerSocket>> afterBind = new ArrayList<>();
+	private final int port;
 
-	public NetcodeServerFactory(SocketMode socketMode, SecurityMode securityMode) {
+	/**
+	 * Creates a new factory instance
+	 */
+	public NetcodeServerFactory(int port, SocketMode socketMode, SecurityMode securityMode) {
 		Objects.requireNonNull(socketMode, "socketMode may not be null");
 		Objects.requireNonNull(securityMode, "securityMode may not be null");
 		this.socketMode = socketMode;
 		if (socketMode == SocketMode.PLAIN && securityMode != SecurityMode.ANY)
 			throw new IllegalArgumentException("incompatible securityMode");
 		this.securityMode = securityMode;
+		this.port = port;
 	}
 
-	public NetcodeServerFactory() {
-		this(SocketMode.TLS, SecurityMode.ANONYMOUS);
+	public NetcodeServerFactory(int port) {
+		this(port, SocketMode.TLS, SecurityMode.ANONYMOUS);
 	}
 
 	public void runAfterBind(Consumer<ServerSocket> runner) {
@@ -55,7 +60,7 @@ public final class NetcodeServerFactory {
 		this.backlog = backlog;
 	}
 
-	public NetcodeServer bind(int port) throws IOException {
+	public NetcodeServer start() throws IOException {
 		ServerSocketFactory ssf = (socketMode == SocketMode.PLAIN) ? ServerSocketFactory.getDefault()
 				: SSLServerSocketFactory.getDefault();
 		ServerSocket ss = ssf.createServerSocket(port, backlog);

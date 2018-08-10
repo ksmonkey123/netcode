@@ -14,7 +14,7 @@ public class Server {
 
 	public static void main(String[] args) throws IOException, InterruptedException, ConnectionException {
 		// start server
-		NetcodeServer server = new NetcodeServerFactory().bind(7777);
+		NetcodeServer server = new NetcodeServerFactory(7777).start();
 
 		// configure client
 		ChannelConfiguration config = ChannelConfiguration.builder().maxClients(5).build();
