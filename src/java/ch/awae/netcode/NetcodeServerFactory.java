@@ -63,7 +63,7 @@ public final class NetcodeServerFactory {
 			applySecuritySettings((SSLServerSocket) ss);
 		for (val f : afterBind)
 			f.accept(ss);
-		NetcodeServerImpl ns = new NetcodeServerImpl(ss, appIdValidator, channelIdProvider);
+		NetcodeServer ns = new NetcodeServer(ss, appIdValidator, channelIdProvider);
 		ns.start();
 		return ns;
 	}

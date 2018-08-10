@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-import ch.awae.netcode.exception.ConnectionException;
 import lombok.Getter;
 
 class ClientHandler extends Thread {

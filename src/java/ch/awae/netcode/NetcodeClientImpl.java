@@ -8,7 +8,6 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-import ch.awae.netcode.exception.ConnectionException;
 import lombok.Getter;
 
 final class NetcodeClientImpl extends Thread implements NetcodeClient {

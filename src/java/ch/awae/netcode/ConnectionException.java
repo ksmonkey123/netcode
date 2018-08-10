@@ -1,4 +1,4 @@
-package ch.awae.netcode.exception;
+package ch.awae.netcode;
 
 public class ConnectionException extends Exception {
 
