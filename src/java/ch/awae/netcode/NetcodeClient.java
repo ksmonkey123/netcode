@@ -4,7 +4,7 @@ import java.io.IOException;
 
 public interface NetcodeClient {
 
-	void close() throws IOException;
+	void disconnect() throws IOException;
 
 	void send(Object payload) throws IOException;
 

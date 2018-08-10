@@ -123,7 +123,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void disconnect() throws IOException {
 		socket.close();
 	}
 
