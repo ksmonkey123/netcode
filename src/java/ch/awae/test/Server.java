@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import ch.awae.netcode.ChannelConfiguration;
-import ch.awae.netcode.ConnectionException;
 import ch.awae.netcode.Message;
 import ch.awae.netcode.MessageHandler;
 import ch.awae.netcode.NetcodeClient;
 import ch.awae.netcode.NetcodeClientFactory;
 import ch.awae.netcode.NetcodeServer;
 import ch.awae.netcode.NetcodeServerFactory;
+import ch.awae.netcode.exception.ConnectionException;
 
 public class Server {
 
