@@ -48,19 +48,19 @@ public final class NetcodeClientFactory {
 
 	public NetcodeClient createChannel(String userId, ChannelConfiguration configuration) throws IOException, ConnectionException {
 		Objects.requireNonNull(messageHandler);
-		NetcodeClient client = initSocket();
+		NetcodeClientImpl client = initSocket();
 		client.open(new NetcodeHandshakeRequest(appId, null, userId, true, configuration));
 		return client;
 	}
 
 	public NetcodeClient joinChannel(String userId, String channelId) throws IOException, ConnectionException {
 		Objects.requireNonNull(messageHandler);
-		NetcodeClient client = initSocket();
+		NetcodeClientImpl client = initSocket();
 		client.open(new NetcodeHandshakeRequest(appId, channelId, userId, false, null));
 		return client;
 	}
 
-	private NetcodeClient initSocket() throws IOException {
+	private NetcodeClientImpl initSocket() throws IOException {
 		SocketFactory sf = (socketMode == SocketMode.PLAIN) ? SocketFactory.getDefault()
 				: SSLSocketFactory.getDefault();
 		Socket s = sf.createSocket(this.host, this.port);
@@ -72,7 +72,7 @@ public final class NetcodeClientFactory {
 		}
 		for (val f : afterBind)
 			f.accept(s);
-		return new NetcodeClient(s, messageHandler);
+		return new NetcodeClientImpl(s, messageHandler);
 	}
 
 	private void applySecuritySettings(SSLSocket socket) {
