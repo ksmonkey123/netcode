@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 import javax.net.SocketFactory;
@@ -24,7 +23,7 @@ public final class NetcodeClientFactory {
 	private List<Consumer<Socket>> afterBind = new ArrayList<>();
 	private SocketMode socketMode = SocketMode.TLS;
 	private SecurityMode securityMode = SecurityMode.ANONYMOUS;
-	@Setter
+	@Setter @Getter
 	private MessageHandler messageHandler;
 	private final String appId;
 	private final String host;
@@ -48,14 +47,12 @@ public final class NetcodeClientFactory {
 	}
 
 	public NetcodeClient createChannel(String userId, ChannelConfiguration configuration) throws IOException, ConnectionException {
-		Objects.requireNonNull(messageHandler);
 		NetcodeClientImpl client = initSocket();
 		client.open(new NetcodeHandshakeRequest(appId, null, userId, true, configuration));
 		return client;
 	}
 
 	public NetcodeClient joinChannel(String userId, String channelId) throws IOException, ConnectionException {
-		Objects.requireNonNull(messageHandler);
 		NetcodeClientImpl client = initSocket();
 		client.open(new NetcodeHandshakeRequest(appId, channelId, userId, false, null));
 		return client;

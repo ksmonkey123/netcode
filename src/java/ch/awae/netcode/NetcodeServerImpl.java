@@ -16,7 +16,7 @@ final class NetcodeServerImpl extends Thread implements NetcodeServer {
 	public NetcodeServerImpl(ServerSocket serverSocket, Predicate<String> appIdValidator,
 			Supplier<String> channelIdProvider) {
 		this.serverSocket = serverSocket;
-		this.manager = new ChannelManagerImpl(appIdValidator, channelIdProvider);
+		this.manager = new ChannelManager(appIdValidator, channelIdProvider);
 	}
 
 	@Override

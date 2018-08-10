@@ -15,5 +15,7 @@ public interface NetcodeClient {
 	ChannelConfiguration getChannelConfiguration();
 	
 	String[] getUsers();
+	
+	void setMessageHandler(MessageHandler handler);
 
 }

@@ -7,6 +7,9 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import ch.awae.netcode.exception.ConnectionException;
 import lombok.Getter;
@@ -18,9 +21,10 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	private final PrintWriter out;
 	private @Getter String userId;
 	private ChannelConfiguration config;
-	private final MessageHandler messageHandler;
+	private MessageHandler messageHandler;
 	private final Object WRITE_LOCK = new Object();
 	private List<String> users = new ArrayList<>();
+	private BlockingQueue<MessageImpl> backlog = new LinkedBlockingQueue<>();
 
 	public NetcodeClientImpl(Socket s, MessageHandler messageHandler) throws IOException {
 		this.messageHandler = messageHandler;
@@ -40,16 +44,15 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 			out.flush();
 			userId = request.getUserId();
 
-			List<MessageImpl> backlog = new ArrayList<>();
 			// wait for initialization data to arrive
-
 			while (true) {
 				MessageImpl msg = Parser.json2pojo(in.readLine(), MessageImpl.class);
 				if (msg.isManagementMessage() && msg.getPayload() instanceof GreetingMessage) {
 					GreetingMessage gm = (GreetingMessage) msg.getPayload();
 					config = gm.getConfig();
-					for (String user : gm.getUsers())
-						messageHandler.clientJoined(user);
+					if (messageHandler != null)
+						for (String user : gm.getUsers())
+							messageHandler.clientJoined(user);
 					break;
 				} else if (msg.isManagementMessage() && msg.getPayload() instanceof Throwable) {
 					if (msg.getPayload() instanceof ConnectionException)
@@ -61,8 +64,8 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 			}
 
 			// work through backlog
-			for (MessageImpl m : backlog)
-				process(m);
+			if (messageHandler != null)
+				setMessageHandler(messageHandler);
 
 			this.start();
 
@@ -102,7 +105,11 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 					String m = in.readLine();
 					if (m == null)
 						continue;
-					process(Parser.json2pojo(m, MessageImpl.class));
+					MessageImpl msg = Parser.json2pojo(m, MessageImpl.class);
+					if (messageHandler != null)
+						process(msg);
+					else
+						backlog.add(msg);
 				} catch (IOException e) {
 					break;
 				}
@@ -138,6 +145,14 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 		synchronized (WRITE_LOCK) {
 			out.println(Parser.pojo2json(MessageFactory.privateMessage(this.userId, userId, payload)));
 			out.flush();
+		}
+	}
+
+	@Override
+	public void setMessageHandler(MessageHandler handler) {
+		Objects.requireNonNull(handler);
+		while (!backlog.isEmpty()) {
+			process(backlog.poll());
 		}
 	}
 
