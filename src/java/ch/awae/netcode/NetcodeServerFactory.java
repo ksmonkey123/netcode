@@ -25,7 +25,7 @@ public final class NetcodeServerFactory {
 	private final SocketMode socketMode;
 	private final SecurityMode securityMode;
 	@Setter(AccessLevel.NONE)
-	private int backlog = 50;
+	private int maxClients = 50;
 	private Predicate<String> appIdValidator = s -> true;
 	private Supplier<String> channelIdProvider = new RandomStringGenerator(6);
 	@Getter(AccessLevel.NONE)
@@ -54,16 +54,16 @@ public final class NetcodeServerFactory {
 		afterBind.add(runner);
 	}
 
-	public void setBacklog(int backlog) {
-		if (backlog <= 0)
+	public void setMaxClients(int max) {
+		if (max <= 0)
 			throw new IllegalArgumentException("backlog must be positive");
-		this.backlog = backlog;
+		this.maxClients = max;
 	}
 
 	public NetcodeServer start() throws IOException {
 		ServerSocketFactory ssf = (socketMode == SocketMode.PLAIN) ? ServerSocketFactory.getDefault()
 				: SSLServerSocketFactory.getDefault();
-		ServerSocket ss = ssf.createServerSocket(port, backlog);
+		ServerSocket ss = ssf.createServerSocket(port, maxClients);
 		if (socketMode != SocketMode.PLAIN)
 			applySecuritySettings((SSLServerSocket) ss);
 		for (val f : afterBind)
