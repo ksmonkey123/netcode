@@ -67,7 +67,7 @@ final class ClientHandler extends Thread {
 	}
 
 	private Channel performHandshake() throws IOException, ConnectionException {
-		out.println(Parser.PROTOCOL_VERSION);
+		out.println(Parser.PROTOCOL_VERSION_SERVER);
 		out.flush();
 		NetcodeHandshakeRequest request = Parser.json2pojo(in.readLine(), NetcodeHandshakeRequest.class);
 		validate(request);

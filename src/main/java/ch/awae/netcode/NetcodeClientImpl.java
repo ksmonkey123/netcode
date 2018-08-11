@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
@@ -45,9 +46,9 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	public void open(NetcodeHandshakeRequest request) throws IOException, ConnectionException {
 		try {
 			String line = in.readLine();
-			if (!Parser.PROTOCOL_VERSION.equals(line))
+			if (!Arrays.asList(line.split(",")).contains(Parser.PROTOCOL_VERSION_CLIENT))
 				throw new IncompatibleServerException("incompatible server version: expected '"
-						+ Parser.PROTOCOL_VERSION + "' but received '" + line + "'");
+						+ Parser.PROTOCOL_VERSION_CLIENT + "' but received '" + line + "'");
 			out.println(Parser.pojo2json(request));
 			out.flush();
 			userId = request.getUserId();

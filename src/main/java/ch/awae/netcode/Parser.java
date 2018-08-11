@@ -14,7 +14,8 @@ import lombok.SneakyThrows;
 
 final class Parser {
 
-	final static String PROTOCOL_VERSION = "NETCODE_1";
+	final static String PROTOCOL_VERSION_SERVER = "NETCODE_1,NETCODE_2";
+	final static String PROTOCOL_VERSION_CLIENT = "NETCODE_1";
 
 	private final static ObjectMapper mapper = new ObjectMapper();
 
