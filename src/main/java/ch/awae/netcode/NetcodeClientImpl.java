@@ -61,6 +61,8 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 					if (msg.getPayload() instanceof ConnectionException)
 						throw new ConnectionException(((ConnectionException) msg.getPayload()).getMessage());
 					throw new RuntimeException((Throwable) msg.getPayload());
+				} else if (msg.isManagementMessage()) {
+					handleManagementMessage(msg);
 				} else {
 					backlog.add(msg);
 				}
@@ -79,19 +81,30 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 
 	}
 
-	private void process(MessageImpl m) {
-		if (m.isManagementMessage() && m.getPayload() instanceof UserChange) {
-			UserChange data = (UserChange) m.getPayload();
+	private void handleManagementMessage(MessageImpl msg) {
+		Serializable payload = msg.getPayload();
+		if (payload instanceof UserChange) {
+			UserChange data = (UserChange) payload;
 			if (data.isJoined()) {
 				if (!users.contains(data.getUserId()))
 					users.add(data.getUserId());
-				messageHandler.clientJoined(data.getUserId());
+				if (messageHandler != null)
+					messageHandler.clientJoined(data.getUserId());
 			} else {
 				users.remove(data.getUserId());
-				messageHandler.clientLeft(data.getUserId());
+				if (messageHandler != null)
+					messageHandler.clientLeft(data.getUserId());
 			}
-		} else {
+		}
+	}
+
+	private void process(MessageImpl m) {
+		if (m.isManagementMessage()) {
+			handleManagementMessage(m);
+		} else if (messageHandler != null) {
 			messageHandler.handleMessage(m);
+		} else {
+			backlog.add(m);
 		}
 	}
 
@@ -109,10 +122,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 					if (m == null)
 						continue;
 					MessageImpl msg = Parser.json2pojo(m, MessageImpl.class);
-					if (messageHandler != null)
-						process(msg);
-					else
-						backlog.add(msg);
+					process(msg);
 				} catch (IOException e) {
 					break;
 				}
@@ -157,7 +167,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 		Objects.requireNonNull(handler);
 		this.messageHandler = handler;
 		while (!backlog.isEmpty()) {
-			process(backlog.poll());
+			messageHandler.handleMessage(backlog.poll());
 		}
 	}
 

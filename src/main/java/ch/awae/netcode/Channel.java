@@ -36,7 +36,15 @@ final class Channel {
 		}
 		String[] users = clients.keySet().toArray(new String[0]);
 		handler.send(MessageFactory.serverMessage(new GreetingMessage(config, users)));
-		send(MessageFactory.serverMessage(new UserChange(userId, true)));
+		Message msg = MessageFactory.serverMessage(new UserChange(userId, true));
+		clients.values().forEach(c -> {
+			if (!c.getUserId().equals(userId))
+				try {
+					c.send(msg);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+		});
 	}
 
 	synchronized void quit(String userId) throws IOException {
