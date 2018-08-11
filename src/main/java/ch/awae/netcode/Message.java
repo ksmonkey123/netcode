@@ -20,7 +20,7 @@ public interface Message {
 
 	Timestamp getTime();
 
-	Object getPayload();
+	Serializable getPayload();
 
 	boolean isPrivateMessage();
 

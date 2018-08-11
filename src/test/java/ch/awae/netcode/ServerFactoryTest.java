@@ -11,6 +11,12 @@ public class ServerFactoryTest {
 		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
 		nsf.setMaxClients(0);
 	}
+	
+	@Test(expected = IllegalArgumentException.class)
+	public void oneClientIsNotEnough() {
+		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
+		nsf.setMaxClients(1);
+	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void negativeClients() {

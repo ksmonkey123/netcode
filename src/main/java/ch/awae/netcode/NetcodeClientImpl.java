@@ -54,9 +54,8 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 				if (msg.isManagementMessage() && msg.getPayload() instanceof GreetingMessage) {
 					GreetingMessage gm = (GreetingMessage) msg.getPayload();
 					config = gm.getConfig();
-					if (messageHandler != null)
-						for (String user : gm.getUsers())
-							messageHandler.clientJoined(user);
+					for(String user : gm.getUsers())
+						users.add(user);
 					break;
 				} else if (msg.isManagementMessage() && msg.getPayload() instanceof Throwable) {
 					if (msg.getPayload() instanceof ConnectionException)
@@ -155,6 +154,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	@Override
 	public void setMessageHandler(MessageHandler handler) {
 		Objects.requireNonNull(handler);
+		this.messageHandler = handler;
 		while (!backlog.isEmpty()) {
 			process(backlog.poll());
 		}
