@@ -114,7 +114,7 @@ public class ClientFactoryTest {
 		}
 	}
 
-	@Test(expected = ConnectionException.class)
+	@Test(expected = ChannelUserLimitReachedException.class)
 	public void cannotJoinFullChannel() throws IOException, ConnectionException, InterruptedException {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
@@ -129,7 +129,7 @@ public class ClientFactoryTest {
 		}
 	}
 
-	@Test(expected = ConnectionException.class)
+	@Test(expected = DuplicateUserIdException.class)
 	public void cannotJoinWithDuplicateUserId() throws IOException, ConnectionException, InterruptedException {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
@@ -143,7 +143,7 @@ public class ClientFactoryTest {
 		}
 	}
 
-	@Test(expected = ConnectionException.class)
+	@Test(expected = InvalidChannelIdException.class)
 	public void cannotJoinMissingChannel() throws IOException, ConnectionException, InterruptedException {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
@@ -156,7 +156,7 @@ public class ClientFactoryTest {
 		}
 	}
 
-	@Test(expected = ConnectionException.class)
+	@Test(expected = InvalidAppIdException.class)
 	public void cannotCreateChannelOnIllegalAppId() throws IOException, ConnectionException, InterruptedException {
 		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
 		nsf.setAppIdValidator(s -> false);
@@ -172,7 +172,7 @@ public class ClientFactoryTest {
 		}
 	}
 
-	@Test(expected = ConnectionException.class)
+	@Test(expected = InvalidAppIdException.class)
 	public void cannotJoinChannelWithIllegalAppId() throws IOException, ConnectionException, InterruptedException {
 		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
 		nsf.setAppIdValidator(s -> false);

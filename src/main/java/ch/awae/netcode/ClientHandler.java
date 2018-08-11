@@ -74,7 +74,7 @@ final class ClientHandler extends Thread {
 		Channel channel = request.isMaster() ? manager.createChannel(request.getAppId(), request.getConfig())
 				: manager.getChannel(request.getAppId(), request.getChannelId());
 		if (channel == null)
-			throw new ConnectionException("unknown channel id: '" + request.getChannelId() + "'");
+			throw new InvalidChannelIdException("unknown channel id: '" + request.getChannelId() + "'");
 		channel.join(request.getUserId(), this);
 		return channel;
 	}

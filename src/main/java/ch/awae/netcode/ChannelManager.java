@@ -31,13 +31,13 @@ final class ChannelManager {
 
 	Channel getChannel(String appId, String channelId) throws ConnectionException {
 		if (!appIdValidator.test(appId))
-			throw new ConnectionException("invalid application id: '" + appId + "'");
+			throw new InvalidAppIdException("invalid application id: '" + appId + "'");
 		return channels.get().get(appId + "/" + channelId);
 	}
 
 	Channel createChannel(String appId, ChannelConfiguration config) throws ConnectionException {
 		if (!appIdValidator.test(appId))
-			throw new ConnectionException("invalid application id: '" + appId + "'");
+			throw new InvalidAppIdException("invalid application id: '" + appId + "'");
 		Channel c;
 		while (true) {
 			String id = channelIdProvider.get();

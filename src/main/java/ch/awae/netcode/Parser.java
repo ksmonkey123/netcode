@@ -7,7 +7,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.SneakyThrows;
 
 final class Parser {
 
@@ -15,15 +18,18 @@ final class Parser {
 
 	private final static ObjectMapper mapper = new ObjectMapper();
 
-	static String pojo2json(Object object) throws IOException {
+	@SneakyThrows(JsonProcessingException.class)
+	static String pojo2json(Object object) {
 		return mapper.writeValueAsString(object);
 	}
 
-	static <T> T json2pojo(String string, Class<T> type) throws IOException {
+	@SneakyThrows(IOException.class)
+	static <T> T json2pojo(String string, Class<T> type) {
 		return mapper.readValue(string, type);
 	}
 
-	static byte[] pojo2array(Serializable object) throws IOException {
+	@SneakyThrows(IOException.class)
+	static byte[] pojo2array(Serializable object) {
 		try (ByteArrayOutputStream bo = new ByteArrayOutputStream();
 				ObjectOutputStream so = new ObjectOutputStream(bo)) {
 			so.writeObject(object);
@@ -32,7 +38,8 @@ final class Parser {
 		}
 	}
 
-	static Object array2pojo(byte[] array) throws IOException, ClassNotFoundException {
+	@SneakyThrows({ IOException.class, ClassNotFoundException.class })
+	static Object array2pojo(byte[] array) {
 		try (ByteArrayInputStream bi = new ByteArrayInputStream(array);
 				ObjectInputStream si = new ObjectInputStream(bi)) {
 			return si.readObject();

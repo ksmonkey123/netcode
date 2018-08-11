@@ -27,12 +27,12 @@ final class Channel {
 		int count = member.incrementAndGet();
 		if (count > config.getMaxClients()) {
 			member.decrementAndGet();
-			throw new ConnectionException("channel limit reached: " + config.getMaxClients());
+			throw new ChannelUserLimitReachedException("channel limit reached: " + config.getMaxClients());
 		}
 		ClientHandler old = clients.putIfAbsent(userId, handler);
 		if (old != null) {
 			member.decrementAndGet();
-			throw new ConnectionException("duplicate username: '" + userId + "'");
+			throw new DuplicateUserIdException("duplicate username: '" + userId + "'");
 		}
 		String[] users = clients.keySet().toArray(new String[0]);
 		handler.send(MessageFactory.serverMessage(new GreetingMessage(config, users)));

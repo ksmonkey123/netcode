@@ -268,7 +268,7 @@ public class ClientTest {
 		}
 	}
 
-	@Test(expected = ConnectionException.class)
+	@Test(expected = InvalidChannelIdException.class)
 	public void channelIdDoesNotLeakBetweenApps() throws IOException, ConnectionException, InterruptedException {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {

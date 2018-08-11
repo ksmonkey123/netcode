@@ -59,7 +59,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 					break;
 				} else if (msg.isManagementMessage() && msg.getPayload() instanceof Throwable) {
 					if (msg.getPayload() instanceof ConnectionException)
-						throw new ConnectionException(((ConnectionException) msg.getPayload()).getMessage());
+						throw (ConnectionException) msg.getPayload();
 					throw new RuntimeException((Throwable) msg.getPayload());
 				} else if (msg.isManagementMessage()) {
 					handleManagementMessage(msg);
@@ -142,7 +142,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	}
 
 	@Override
-	public void send(Serializable payload) throws IOException {
+	public void send(Serializable payload) {
 		synchronized (WRITE_LOCK) {
 			out.println(Parser.pojo2json(MessageFactory.normalMessage(userId, payload)));
 			out.flush();
@@ -154,7 +154,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	}
 
 	@Override
-	public void sendPrivately(String userId, Serializable payload) throws IOException {
+	public void sendPrivately(String userId, Serializable payload) {
 		Objects.requireNonNull(userId);
 		synchronized (WRITE_LOCK) {
 			out.println(Parser.pojo2json(MessageFactory.privateMessage(this.userId, userId, payload)));

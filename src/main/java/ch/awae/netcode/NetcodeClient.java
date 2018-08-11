@@ -15,19 +15,15 @@ public interface NetcodeClient {
 
 	/**
 	 * Send the given object to all members of the channel
-	 * 
-	 * @throws IOException
 	 */
-	void send(Serializable payload) throws IOException;
+	void send(Serializable payload);
 
 	/**
 	 * Send the given object to the member of the channel with the given userId.
 	 * Only the specified user will (if he exists) receive the message. It will
 	 * not be transmitted to any other clients.
-	 * 
-	 * @throws IOException
 	 */
-	void sendPrivately(String userId, Serializable payload) throws IOException;
+	void sendPrivately(String userId, Serializable payload);
 
 	/**
 	 * Get the userId of this client.
