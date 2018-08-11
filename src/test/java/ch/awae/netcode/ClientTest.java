@@ -244,7 +244,7 @@ public class ClientTest {
 		}
 	}
 
-	@Test(expected = InvalidConfigurationException.class)
+	@Test(expected = InvalidRequestException.class)
 	public void rejectBadMaxMemberValue() throws IOException, ConnectionException, InterruptedException {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {

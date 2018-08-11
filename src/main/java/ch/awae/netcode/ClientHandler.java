@@ -70,6 +70,7 @@ final class ClientHandler extends Thread {
 		out.println(Parser.PROTOCOL_VERSION);
 		out.flush();
 		NetcodeHandshakeRequest request = Parser.json2pojo(in.readLine(), NetcodeHandshakeRequest.class);
+		validate(request);
 		this.userId = request.getUserId();
 		Channel channel = request.isMaster() ? manager.createChannel(request.getAppId(), request.getConfig())
 				: manager.getChannel(request.getAppId(), request.getChannelId());
@@ -77,6 +78,25 @@ final class ClientHandler extends Thread {
 			throw new InvalidChannelIdException("unknown channel id: '" + request.getChannelId() + "'");
 		channel.join(request.getUserId(), this);
 		return channel;
+	}
+
+	private void validate(NetcodeHandshakeRequest request) throws InvalidRequestException {
+		if (request.getUserId() == null)
+			throw new InvalidRequestException("invalid request: userId may not be null");
+		if (request.getAppId() == null)
+			throw new InvalidRequestException("invalid request: userId may not be null");
+		if (request.isMaster() && request.getChannelId() != null)
+			throw new InvalidRequestException(
+					"invalid request: requested channel creation but sent along a channel id");
+		if (!request.isMaster() && request.getChannelId() == null)
+			throw new InvalidRequestException("invalid request: requested channel joining but missing channel id");
+		if (request.isMaster() && request.getConfig() == null)
+			throw new InvalidRequestException("invalid request: channel configuration missing");
+		if (!request.isMaster())
+			return;
+		ChannelConfiguration config = request.getConfig();
+		if (config.getMaxClients() < 2)
+			throw new InvalidRequestException("invalid request: at least 2 clients must be allowed");
 	}
 
 	public void close() throws IOException {
