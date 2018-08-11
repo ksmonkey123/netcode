@@ -240,6 +240,19 @@ public class ClientTest {
 			Assert.assertEquals(client2.getChannelConfiguration(), client2.getChannelConfiguration());
 		} finally {
 			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test(expected = InvalidConfigurationException.class)
+	public void rejectBadMaxMemberValue() throws IOException, ConnectionException, InterruptedException {
+		NetcodeServer server = new NetcodeServerFactory(8888).start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			ncf.createChannel("test1", ChannelConfiguration.builder().maxClients(-1).build());
+		} finally {
+			server.close();
+			Thread.sleep(500);
 		}
 	}
 

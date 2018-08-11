@@ -6,6 +6,7 @@ package ch.awae.netcode;
  * The {@link #PLAIN} mode uses a {@link java.net.Socket}, all other modes use
  * different configurations of a {@link javax.net.ssl.SSLSocket}.
  * 
+ * @since netcode 0.1.0
  * @author Andreas Wälchli
  */
 public enum SocketMode {

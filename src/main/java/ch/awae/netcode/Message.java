@@ -14,14 +14,35 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * Base interface for received messages.
+ * 
+ * Whenever a message is sent the sending client attaches some meta-data to it.
+ * This data is not visible to the sender.
+ * 
+ * @since netcode 0.1.0
+ * @author Andreas Wälchli
+ */
 public interface Message {
 
+	/**
+	 * The userId of the sending client.
+	 */
 	String getUserId();
 
+	/**
+	 * The time the message was created.
+	 */
 	Timestamp getTime();
 
+	/**
+	 * The message payload.
+	 */
 	Serializable getPayload();
 
+	/**
+	 * Indicates if the message has been sent privately.
+	 */
 	boolean isPrivateMessage();
 
 }
@@ -56,7 +77,6 @@ final class UserChange implements Serializable {
 	private String userId;
 	private boolean joined;
 }
-
 
 @Data
 @AllArgsConstructor

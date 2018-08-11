@@ -20,6 +20,16 @@ public class ServerFactoryTest {
 		nsf.setMaxClients(-10);
 	}
 
+	@Test(expected = IllegalArgumentException.class)
+	public void negativePort() {
+		new NetcodeServerFactory(-1);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void tooLargePort() {
+		new NetcodeServerFactory(65536);
+	}
+
 	@Test(expected = NullPointerException.class)
 	public void illegalAppIdValidator() {
 		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
@@ -34,12 +44,13 @@ public class ServerFactoryTest {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void badModeConfiguration() {
-		new NetcodeServerFactory(8888, SocketMode.PLAIN, SecurityMode.CERTIFICATE);
+		new NetcodeServerFactory(8888).setMode(SocketMode.PLAIN, SecurityMode.CERTIFICATE);
 	}
 
 	@Test
 	public void startAndShutdownTLS() throws IOException, InterruptedException {
-		NetcodeServerFactory nsf = new NetcodeServerFactory(8888, SocketMode.TLS, SecurityMode.ANY);
+		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
+		nsf.setMode(SocketMode.TLS, SecurityMode.ANY);
 		NetcodeServer server = nsf.start();
 		Thread.sleep(300);
 		server.close();
@@ -48,7 +59,8 @@ public class ServerFactoryTest {
 
 	@Test
 	public void startAndShutdownSecure() throws IOException, InterruptedException {
-		NetcodeServerFactory nsf = new NetcodeServerFactory(8888, SocketMode.SECURE, SecurityMode.ANY);
+		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
+		nsf.setMode(SocketMode.SECURE, SecurityMode.ANY);
 		NetcodeServer server = nsf.start();
 		Thread.sleep(300);
 		server.close();
@@ -57,7 +69,8 @@ public class ServerFactoryTest {
 
 	@Test
 	public void startAndShutdownSSL() throws IOException, InterruptedException {
-		NetcodeServerFactory nsf = new NetcodeServerFactory(8888, SocketMode.SSL, SecurityMode.ANY);
+		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
+		nsf.setMode(SocketMode.SSL, SecurityMode.ANY);
 		NetcodeServer server = nsf.start();
 		Thread.sleep(300);
 		server.close();
@@ -66,7 +79,8 @@ public class ServerFactoryTest {
 
 	@Test
 	public void startAndShutdownPlain() throws IOException, InterruptedException {
-		NetcodeServerFactory nsf = new NetcodeServerFactory(8888, SocketMode.PLAIN, SecurityMode.ANY);
+		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
+		nsf.setMode(SocketMode.PLAIN, SecurityMode.ANY);
 		NetcodeServer server = nsf.start();
 		Thread.sleep(300);
 		server.close();

@@ -5,6 +5,12 @@ import java.util.Base64;
 import java.util.Base64.Encoder;
 import java.util.function.Supplier;
 
+/**
+ * A generator for generating strings of the pattern [a-zA-Z0-9]{n}.
+ * 
+ * @since netcode 0.1.0
+ * @author Andreas Wälchli
+ */
 public final class RandomStringGenerator implements Supplier<String> {
 
 	private final SecureRandom random = new SecureRandom();

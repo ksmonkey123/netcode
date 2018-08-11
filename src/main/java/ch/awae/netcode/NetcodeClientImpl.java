@@ -46,8 +46,8 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 		try {
 			String line = in.readLine();
 			if (!Parser.PROTOCOL_VERSION.equals(line))
-				throw new ConnectionException("incompatible server version: expected '" + Parser.PROTOCOL_VERSION
-						+ "' but received '" + line + "'");
+				throw new IncompatibleServerException("incompatible server version: expected '"
+						+ Parser.PROTOCOL_VERSION + "' but received '" + line + "'");
 			out.println(Parser.pojo2json(request));
 			out.flush();
 			userId = request.getUserId();
@@ -178,6 +178,11 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	@Override
 	public Message receive() throws InterruptedException {
 		return this.backlog.take();
+	}
+
+	@Override
+	public Message tryReceive() {
+		return this.backlog.poll();
 	}
 
 }

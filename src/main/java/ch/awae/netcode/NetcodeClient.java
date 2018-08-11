@@ -3,6 +3,32 @@ package ch.awae.netcode;
 import java.io.IOException;
 import java.io.Serializable;
 
+/**
+ * The client instance for the Netcode system.
+ * 
+ * The client can receive messages synchronously and asynchronously. In any case
+ * the messages are read from the network asynchronously. If a
+ * {@link MessageHandler} is defined it gets invoked. If no such handler is
+ * specified the messages enter the message queue for synchronous reception
+ * using {@link #receive()} or {@link #tryReceive()}.
+ * 
+ * The client can be switched between synchronous and asynchronous operation at
+ * any time. When switching from synchronous to asynchronous mode all the
+ * messages from the synchronous message queue are pushed into the message
+ * handler. During this phase it is possible that messages arrive out of order
+ * or multiple concurrent invocations of the handler exit. It is therefore
+ * recommended to avoid frequent mode switching. Threads blocked in
+ * {@link #receive()} during the transition to asynchronous operation remain
+ * blocked indefinitely.
+ * 
+ * Channel events can only be processed asynchronously. For this a
+ * {@link ChannelEventHandler} must be specified.
+ * 
+ * @since netcode 0.1.0
+ * @see NetcodeClientFactory
+ * 
+ * @author Andreas Wälchli
+ */
 public interface NetcodeClient {
 
 	/**
@@ -41,18 +67,22 @@ public interface NetcodeClient {
 	 */
 	String[] getUsers();
 
-	/**
-	 * Replace the message handler. If no message handler has been set before
-	 * the new handler will receive the full backlog of all previous messages.
-	 * 
-	 * @param handler
-	 * @throws NullPointerException
-	 *             handler is null
-	 */
 	void setMessageHandler(MessageHandler handler);
-	
+
 	void setEventHandler(ChannelEventHandler handler);
 
+	/**
+	 * Receive the next message synchronously and wait if no message is ready.
+	 * 
+	 * Note: if this method is called while a {@link MessageHandler} is present
+	 * the call will block indefinitely.
+	 */
 	Message receive() throws InterruptedException;
+
+	/**
+	 * Receive the next message synchronously if it exists. Otherwise returns
+	 * {@code null}.
+	 */
+	Message tryReceive();
 
 }
