@@ -40,6 +40,10 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 
 	public void open(NetcodeHandshakeRequest request) throws IOException, ConnectionException {
 		try {
+			String line = in.readLine();
+			if (!Parser.PROTOCOL_VERSION.equals(line))
+				throw new ConnectionException("incompatible server version: expected '" + Parser.PROTOCOL_VERSION
+						+ "' but received '" + line + "'");
 			out.println(Parser.pojo2json(request));
 			out.flush();
 			userId = request.getUserId();

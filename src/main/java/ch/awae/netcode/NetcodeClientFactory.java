@@ -62,13 +62,12 @@ public final class NetcodeClientFactory {
 				: SSLSocketFactory.getDefault();
 		Socket s = sf.createSocket(this.host, this.port);
 		s.setKeepAlive(true);
-		if (socketMode != SocketMode.PLAIN) {
-			SSLSocket ssls = (SSLSocket) s;
-			applySecuritySettings(ssls);
-			ssls.startHandshake();
-		}
+		if (socketMode != SocketMode.PLAIN)
+			applySecuritySettings((SSLSocket) s);
 		for (val f : afterBind)
 			f.accept(s);
+		if (socketMode != SocketMode.PLAIN)
+			((SSLSocket) s).startHandshake();
 		return new NetcodeClientImpl(s, messageHandler);
 	}
 

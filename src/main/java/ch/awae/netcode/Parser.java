@@ -11,6 +11,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 final class Parser {
 
+	final static String PROTOCOL_VERSION = "NETCODE_1";
+
 	private final static ObjectMapper mapper = new ObjectMapper();
 
 	static String pojo2json(Object object) throws IOException {

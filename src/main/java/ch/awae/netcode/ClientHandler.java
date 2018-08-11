@@ -67,6 +67,8 @@ final class ClientHandler extends Thread {
 	}
 
 	private Channel performHandshake() throws IOException, ConnectionException {
+		out.println(Parser.PROTOCOL_VERSION);
+		out.flush();
 		NetcodeHandshakeRequest request = Parser.json2pojo(in.readLine(), NetcodeHandshakeRequest.class);
 		this.userId = request.getUserId();
 		Channel channel = request.isMaster() ? manager.createChannel(request.getAppId(), request.getConfig())
