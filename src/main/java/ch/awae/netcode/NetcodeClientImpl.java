@@ -86,20 +86,25 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	}
 
 	private void handleManagementMessage(MessageImpl msg) {
-		Serializable payload = msg.getPayload();
-		ChannelEventHandler eventHandler = this.eventHandler;
-		if (payload instanceof UserChange) {
-			UserChange data = (UserChange) payload;
-			if (data.isJoined()) {
-				if (!users.contains(data.getUserId()))
-					users.add(data.getUserId());
-				if (eventHandler != null)
-					eventHandler.clientJoined(data.getUserId());
-			} else {
-				users.remove(data.getUserId());
-				if (eventHandler != null)
-					eventHandler.clientLeft(data.getUserId());
+		try {
+			Serializable payload = msg.getPayload();
+			ChannelEventHandler eventHandler = this.eventHandler;
+			if (payload instanceof UserChange) {
+				UserChange data = (UserChange) payload;
+				if (data.isJoined()) {
+					if (!users.contains(data.getUserId()))
+						users.add(data.getUserId());
+					if (eventHandler != null)
+						eventHandler.clientJoined(data.getUserId());
+				} else {
+					users.remove(data.getUserId());
+					if (eventHandler != null)
+						eventHandler.clientLeft(data.getUserId());
+				}
 			}
+		} catch (Exception e) {
+			System.err.println("an error occured while processing event: " + msg);
+			e.printStackTrace();
 		}
 	}
 
@@ -107,7 +112,12 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 		if (m.isManagementMessage()) {
 			handleManagementMessage(m);
 		} else if (messageHandler != null) {
-			messageHandler.handleMessage(m);
+			try {
+				messageHandler.handleMessage(m);
+			} catch (Exception e) {
+				System.err.println("an error occured while processing a message: " + m);
+				e.printStackTrace();
+			}
 		} else {
 			backlog.add(m);
 		}
@@ -161,6 +171,8 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	@Override
 	public void sendPrivately(String userId, Serializable payload) {
 		Objects.requireNonNull(userId);
+		if (!this.users.contains(userId))
+			throw new IllegalArgumentException("unknown client: " + userId);
 		synchronized (WRITE_LOCK) {
 			out.println(Parser.pojo2json(MessageFactory.privateMessage(this.userId, userId, payload)));
 			out.flush();
@@ -171,8 +183,15 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	public void setMessageHandler(MessageHandler handler) {
 		this.messageHandler = handler;
 		if (this.messageHandler != null)
-			while (!backlog.isEmpty())
-				messageHandler.handleMessage(backlog.poll());
+			while (!backlog.isEmpty()) {
+				MessageImpl m = backlog.poll();
+				try {
+					messageHandler.handleMessage(m);
+				} catch (Exception e) {
+					System.err.println("an error occured while processing a message: " + m);
+					e.printStackTrace();
+				}
+			}
 	}
 
 	@Override

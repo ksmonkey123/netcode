@@ -45,9 +45,7 @@ public class ClientTest {
 			NetcodeClient client = ncf.createChannel("test1", bouncing);
 			client.send("Hello There");
 			Thread.sleep(500);
-			client.setMessageHandler(m -> {
-				Assert.assertEquals("Hello There", (String) m.getPayload());
-			});
+			Assert.assertEquals("Hello There", (String) client.receive().getPayload());
 		} finally {
 			server.close();
 			Thread.sleep(500);
@@ -62,9 +60,7 @@ public class ClientTest {
 			NetcodeClient client = ncf.createChannel("test1", bouncing);
 			client.send(null);
 			Thread.sleep(500);
-			client.setMessageHandler(m -> {
-				Assert.assertNull(m.getPayload());
-			});
+			Assert.assertNull(client.receive().getPayload());
 		} finally {
 			server.close();
 			Thread.sleep(1000);
@@ -81,9 +77,9 @@ public class ClientTest {
 			NetcodeClient client2 = ncf.joinChannel("test2", client1.getChannelConfiguration().getChannelId());
 			Thread.sleep(500);
 			client1.sendPrivately("test2", "Hello There");
+			Assert.assertEquals("Hello There", (String) client2.receive().getPayload());
 			Thread.sleep(500);
-			client1.setMessageHandler(m -> Assert.fail());
-			client2.setMessageHandler(m -> Assert.assertEquals("Hello There", (String) m.getPayload()));
+			Assert.assertNull(client1.tryReceive());
 		} finally {
 			server.close();
 			Thread.sleep(1000);
@@ -100,9 +96,9 @@ public class ClientTest {
 			NetcodeClient client2 = ncf.joinChannel("test2", client1.getChannelConfiguration().getChannelId());
 			Thread.sleep(500);
 			client1.send("Hello There");
+			Assert.assertEquals("Hello There", (String) client2.receive().getPayload());
 			Thread.sleep(500);
-			client1.setMessageHandler(m -> Assert.fail());
-			client2.setMessageHandler(m -> Assert.assertEquals("Hello There", (String) m.getPayload()));
+			Assert.assertNull(client1.tryReceive());
 		} finally {
 			server.close();
 			Thread.sleep(500);
@@ -120,7 +116,7 @@ public class ClientTest {
 			Thread.sleep(500);
 			client1.sendPrivately("test1", "Hello There");
 			Thread.sleep(500);
-			client1.setMessageHandler(m -> Assert.assertEquals("Hello There", (String) m.getPayload()));
+			Assert.assertEquals("Hello There", (String) client1.receive().getPayload());
 		} finally {
 			server.close();
 			Thread.sleep(500);
@@ -164,6 +160,21 @@ public class ClientTest {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
 			NetcodeClient client = ncf.createChannel("test1", bouncing);
 			client.sendPrivately(null, "test");
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void privateMessageToMissingClientIsNotAllowed()
+			throws IOException, ConnectionException, InterruptedException {
+		Thread.sleep(1000);
+		NetcodeServer server = new NetcodeServerFactory(8888).start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			NetcodeClient client = ncf.createChannel("test1", bouncing);
+			client.sendPrivately("test2", "test");
 		} finally {
 			server.close();
 			Thread.sleep(500);
@@ -353,6 +364,58 @@ public class ClientTest {
 		}
 	}
 
+	@Test
+	public void aBadHandlerCanNotCrashThreads() throws InterruptedException, IOException, ConnectionException {
+		NetcodeServer server = new NetcodeServerFactory(8888).start();
+		try {
+			NetcodeClientFactory ncf1 = new NetcodeClientFactory("localhost", 8888, "myApp");
+			NetcodeClient client = ncf1.createChannel("test1", bouncing);
+			client.send("hello there");
+			Thread.sleep(500);
+			client.setMessageHandler(m -> {
+				throw new RuntimeException();
+			});
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test
+	public void aBadEventHandlerCanNotCrashThreads() throws InterruptedException, IOException, ConnectionException {
+		NetcodeServer server = new NetcodeServerFactory(8888).start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			CrashingTrackingEH eh = new CrashingTrackingEH();
+			NetcodeClient client1 = ncf.createChannel("test1", bouncing);
+			client1.setEventHandler(eh);
+			String channel = client1.getChannelConfiguration().getChannelId();
+			ncf.joinChannel("test2", channel);
+			ncf.joinChannel("test3", channel);
+			Thread.sleep(1000);
+			Assert.assertEquals(2, eh.runs);
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+
+	}
+
+	@Test
+	public void canCreateAChannelFromProvidedConfig() throws InterruptedException, IOException, ConnectionException {
+		NetcodeServer server = new NetcodeServerFactory(8888).start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			ChannelConfiguration configuration = ncf.createChannel("test1", bouncing).getChannelConfiguration();
+			ncf.createChannel("test2", configuration);
+
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+
+	}
+
 }
 
 class CountingHandler implements MessageHandler {
@@ -366,6 +429,16 @@ class CountingHandler implements MessageHandler {
 		if (counter != next)
 			ok = false;
 		counter++;
+	}
+}
+
+class CrashingTrackingEH implements ChannelEventHandler {
+	public volatile int runs = 0;
+
+	@Override
+	public void clientJoined(String userId) {
+		runs++;
+		throw new RuntimeException();
 	}
 }
 
@@ -391,5 +464,4 @@ class ClientJoinTrackingMH implements ChannelEventHandler {
 		if (expectedUser.equals(userId))
 			hasLeft = true;
 	}
-
 }

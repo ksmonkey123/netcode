@@ -46,8 +46,13 @@ public interface NetcodeClient {
 
 	/**
 	 * Send the given object to the member of the channel with the given userId.
-	 * Only the specified user will (if he exists) receive the message. It will
-	 * not be transmitted to any other clients.
+	 * Only the specified user will receive the message. It will not be
+	 * transmitted to any other clients.
+	 * 
+	 * @throws NullPointerException
+	 *             the userId is null
+	 * @throws IllegalArgumentException
+	 *             the userId is not known
 	 */
 	void sendPrivately(String userId, Serializable payload);
 
