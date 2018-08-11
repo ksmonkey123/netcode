@@ -41,6 +41,7 @@ public class ServerFactoryTest {
 		NetcodeServer server = nsf.start();
 		Thread.sleep(300);
 		server.close();
+		Thread.sleep(300);
 	}
 
 	@Test
@@ -49,6 +50,7 @@ public class ServerFactoryTest {
 		NetcodeServer server = nsf.start();
 		Thread.sleep(300);
 		server.close();
+		Thread.sleep(300);
 	}
 
 	@Test
@@ -57,6 +59,7 @@ public class ServerFactoryTest {
 		NetcodeServer server = nsf.start();
 		Thread.sleep(300);
 		server.close();
+		Thread.sleep(300);
 	}
 
 	@Test
@@ -65,6 +68,7 @@ public class ServerFactoryTest {
 		NetcodeServer server = nsf.start();
 		Thread.sleep(300);
 		server.close();
+		Thread.sleep(300);
 	}
 
 }
