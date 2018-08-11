@@ -65,7 +65,7 @@ public class ClientTest {
 			});
 		} finally {
 			server.close();
-			Thread.sleep(500);
+			Thread.sleep(1000);
 		}
 	}
 
@@ -92,7 +92,7 @@ public class ClientTest {
 			});
 		} finally {
 			server.close();
-			Thread.sleep(500);
+			Thread.sleep(1000);
 		}
 	}
 
@@ -110,7 +110,7 @@ public class ClientTest {
 			client2.setMessageHandler(m -> Assert.assertEquals("Hello There", (String) m.getPayload()));
 		} finally {
 			server.close();
-			Thread.sleep(500);
+			Thread.sleep(1000);
 		}
 	}
 
@@ -228,10 +228,10 @@ public class ClientTest {
 			for (int i = 0; i < 50000; i++)
 				client.send(Integer.valueOf(i));
 
-			Thread.sleep(500);
+			Thread.sleep(2000);
 
 			client.setMessageHandler(new MessageHandler() {
-				int counter = 0;
+				volatile int counter = 0;
 
 				@Override
 				public void handleMessage(Message msg) {
