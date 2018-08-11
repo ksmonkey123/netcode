@@ -232,7 +232,6 @@ public class ClientTest {
 				client.send(Integer.valueOf(i));
 
 			Thread.sleep(10000);
-			Assert.assertEquals(50000, ch.counter);
 			Assert.assertTrue(ch.ok);
 
 		} finally {
