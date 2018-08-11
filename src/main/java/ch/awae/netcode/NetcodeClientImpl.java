@@ -145,6 +145,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 
 	@Override
 	public void sendPrivately(String userId, Serializable payload) throws IOException {
+		Objects.requireNonNull(userId);
 		synchronized (WRITE_LOCK) {
 			out.println(Parser.pojo2json(MessageFactory.privateMessage(this.userId, userId, payload)));
 			out.flush();

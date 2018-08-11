@@ -1,7 +1,9 @@
 package ch.awae.netcode;
 
 import java.io.IOException;
+import java.net.ServerSocket;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 public class ServerFactoryTest {
@@ -10,12 +12,6 @@ public class ServerFactoryTest {
 	public void zeroClients() {
 		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
 		nsf.setMaxClients(0);
-	}
-	
-	@Test(expected = IllegalArgumentException.class)
-	public void oneClientIsNotEnough() {
-		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
-		nsf.setMaxClients(1);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -75,6 +71,27 @@ public class ServerFactoryTest {
 		Thread.sleep(300);
 		server.close();
 		Thread.sleep(300);
+	}
+
+	@Test(expected = NullPointerException.class)
+	public void cannotAddNullHandler() {
+		new NetcodeServerFactory(8888).runAfterBind(null);
+	}
+
+	public void bindersAreRun() throws IOException, ConnectionException, InterruptedException {
+		NetcodeServer server = null;
+		try {
+			NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
+
+			InvocationTrackingConsumer<ServerSocket> f = new InvocationTrackingConsumer<>();
+			nsf.runAfterBind(f);
+			server = nsf.start();
+			Thread.sleep(500);
+			Assert.assertTrue(f.run);
+		} finally {
+			if (server != null)
+				server.close();
+		}
 	}
 
 }

@@ -1,6 +1,8 @@
 package ch.awae.netcode;
 
 import java.io.IOException;
+import java.net.Socket;
+import java.util.function.Consumer;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -184,4 +186,33 @@ public class ClientFactoryTest {
 		}
 	}
 
+	@Test(expected = NullPointerException.class)
+	public void cannotAddNullHandler() {
+		new NetcodeClientFactory("localhost", 8888, "myApp").runAfterBind(null);
+	}
+
+	public void bindersAreRun() throws IOException, ConnectionException, InterruptedException {
+		NetcodeServer server = new NetcodeServerFactory(8888).start();
+		try {
+			InvocationTrackingConsumer<Socket> f = new InvocationTrackingConsumer<>();
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			ncf.runAfterBind(f);
+			ncf.createChannel("test", ChannelConfiguration.getDefault());
+			Thread.sleep(500);
+			Assert.assertTrue(f.run);
+		} finally {
+			server.close();
+		}
+	}
+
+}
+
+class InvocationTrackingConsumer<T> implements Consumer<T> {
+	public volatile boolean run = false;
+
+	@Override
+	public void accept(T t) {
+		System.out.println("run");
+		run = true;
+	}
 }

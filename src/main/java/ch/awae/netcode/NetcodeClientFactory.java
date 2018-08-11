@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import javax.net.SocketFactory;
@@ -22,36 +23,49 @@ public final class NetcodeClientFactory {
 	private List<Consumer<Socket>> afterBind = new ArrayList<>();
 	private SocketMode socketMode = SocketMode.TLS;
 	private SecurityMode securityMode = SecurityMode.ANONYMOUS;
-	@Setter @Getter
+	@Setter
+	@Getter
 	private MessageHandler messageHandler;
 	private final String appId;
 	private final String host;
 	private final int port;
 
 	public NetcodeClientFactory(String host, int port, String appId) {
+		Objects.requireNonNull(host);
+		Objects.requireNonNull(appId);
+		if (port < 0 || port > 65535)
+			throw new IllegalArgumentException("port " + port + " is outside the legal range (0-65535)");
 		this.host = host;
 		this.port = port;
 		this.appId = appId;
 	}
 
 	public void runAfterBind(Consumer<Socket> runner) {
+		Objects.requireNonNull(runner);
 		afterBind.add(runner);
 	}
 
 	public void setMode(SocketMode socketMode, SecurityMode securityMode) {
+		Objects.requireNonNull(socketMode);
+		Objects.requireNonNull(securityMode);
 		if (socketMode == SocketMode.PLAIN && securityMode != SecurityMode.ANY)
 			throw new IllegalArgumentException("incompatible securityMode");
 		this.socketMode = socketMode;
 		this.securityMode = securityMode;
 	}
 
-	public NetcodeClient createChannel(String userId, ChannelConfiguration configuration) throws IOException, ConnectionException {
+	public NetcodeClient createChannel(String userId, ChannelConfiguration configuration)
+			throws IOException, ConnectionException {
+		Objects.requireNonNull(userId);
+		Objects.requireNonNull(configuration);
 		NetcodeClientImpl client = initSocket();
 		client.open(new NetcodeHandshakeRequest(appId, null, userId, true, configuration));
 		return client;
 	}
 
 	public NetcodeClient joinChannel(String userId, String channelId) throws IOException, ConnectionException {
+		Objects.requireNonNull(userId);
+		Objects.requireNonNull(channelId);
 		NetcodeClientImpl client = initSocket();
 		client.open(new NetcodeHandshakeRequest(appId, channelId, userId, false, null));
 		return client;
