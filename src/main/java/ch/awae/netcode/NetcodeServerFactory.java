@@ -15,21 +15,17 @@ import javax.net.ssl.SSLServerSocketFactory;
 
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.val;
 
 @Getter
-@Setter
 public final class NetcodeServerFactory {
 
 	private final SocketMode socketMode;
 	private final SecurityMode securityMode;
-	@Setter(AccessLevel.NONE)
 	private int maxClients = 50;
 	private Predicate<String> appIdValidator = s -> true;
 	private Supplier<String> channelIdProvider = new RandomStringGenerator(6);
 	@Getter(AccessLevel.NONE)
-	@Setter(AccessLevel.NONE)
 	private List<Consumer<ServerSocket>> afterBind = new ArrayList<>();
 	private final int port;
 
@@ -51,6 +47,7 @@ public final class NetcodeServerFactory {
 	}
 
 	public void runAfterBind(Consumer<ServerSocket> runner) {
+		Objects.requireNonNull(runner);
 		afterBind.add(runner);
 	}
 
@@ -71,6 +68,16 @@ public final class NetcodeServerFactory {
 		NetcodeServerImpl ns = new NetcodeServerImpl(ss, appIdValidator, channelIdProvider);
 		ns.start();
 		return ns;
+	}
+
+	public void setAppIdValidator(Predicate<String> appIdValidator) {
+		Objects.requireNonNull(appIdValidator);
+		this.appIdValidator = appIdValidator;
+	}
+
+	public void setChannelIdProvider(Supplier<String> channelIdProvider) {
+		Objects.requireNonNull(channelIdProvider);
+		this.channelIdProvider = channelIdProvider;
 	}
 
 	private void applySecuritySettings(SSLServerSocket ss) {
