@@ -9,12 +9,14 @@ import org.junit.Test;
 
 public class ClientTest {
 
+	static ChannelConfiguration bouncing = ChannelConfiguration.builder().bounceMessages(true).build();
+
 	@Test
 	public void usersMustSyncWithoutHandler() throws IOException, ConnectionException, InterruptedException {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
-			NetcodeClient client1 = ncf.createChannel("test1", ChannelConfiguration.getDefault());
+			NetcodeClient client1 = ncf.createChannel("test1", bouncing);
 			NetcodeClient client2 = ncf.joinChannel("test2", client1.getChannelConfiguration().getChannelId());
 			Thread.sleep(500);
 			List<String> client1Users = Arrays.asList(client1.getUsers());
@@ -40,7 +42,7 @@ public class ClientTest {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
-			NetcodeClient client = ncf.createChannel("test1", ChannelConfiguration.getDefault());
+			NetcodeClient client = ncf.createChannel("test1", bouncing);
 			client.send("Hello There");
 			Thread.sleep(500);
 			client.setMessageHandler(m -> {
@@ -57,7 +59,7 @@ public class ClientTest {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
-			NetcodeClient client = ncf.createChannel("test1", ChannelConfiguration.getDefault());
+			NetcodeClient client = ncf.createChannel("test1", bouncing);
 			client.send(null);
 			Thread.sleep(500);
 			client.setMessageHandler(m -> {
@@ -75,7 +77,7 @@ public class ClientTest {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
-			NetcodeClient client1 = ncf.createChannel("test1", ChannelConfiguration.getDefault());
+			NetcodeClient client1 = ncf.createChannel("test1", bouncing);
 			NetcodeClient client2 = ncf.joinChannel("test2", client1.getChannelConfiguration().getChannelId());
 			Thread.sleep(500);
 			client1.sendPrivately("test2", "Hello There");
@@ -130,7 +132,7 @@ public class ClientTest {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
-			NetcodeClient client = ncf.createChannel("test1", ChannelConfiguration.getDefault());
+			NetcodeClient client = ncf.createChannel("test1", bouncing);
 			client.setMessageHandler(System.out::println);
 			client.setMessageHandler(null);
 		} finally {
@@ -144,7 +146,7 @@ public class ClientTest {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
-			NetcodeClient client = ncf.createChannel("test1", ChannelConfiguration.getDefault());
+			NetcodeClient client = ncf.createChannel("test1", bouncing);
 			client.setEventHandler(new ChannelEventHandler() {
 			});
 			client.setMessageHandler(null);
@@ -160,7 +162,7 @@ public class ClientTest {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
-			NetcodeClient client = ncf.createChannel("test1", ChannelConfiguration.getDefault());
+			NetcodeClient client = ncf.createChannel("test1", bouncing);
 			client.sendPrivately(null, "test");
 		} finally {
 			server.close();
@@ -173,7 +175,7 @@ public class ClientTest {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
-			NetcodeClient client1 = ncf.createChannel("test1", ChannelConfiguration.getDefault());
+			NetcodeClient client1 = ncf.createChannel("test1", bouncing);
 			ClientJoinTrackingMH handler = new ClientJoinTrackingMH("test2");
 			client1.setEventHandler(handler);
 			NetcodeClient client2 = ncf.joinChannel("test2", client1.getChannelConfiguration().getChannelId());
@@ -197,7 +199,7 @@ public class ClientTest {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
 			ClientJoinTrackingMH handler = new ClientJoinTrackingMH("test1");
 			ncf.setEventHandler(handler);
-			ncf.createChannel("test1", ChannelConfiguration.getDefault());
+			ncf.createChannel("test1", bouncing);
 			Thread.sleep(500);
 			Assert.assertFalse(handler.hasJoined);
 			Assert.assertFalse(handler.hasLeft);
@@ -214,7 +216,7 @@ public class ClientTest {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
 			CountingHandler ch = new CountingHandler();
 			ncf.setMessageHandler(ch);
-			NetcodeClient client = ncf.createChannel("test1", ChannelConfiguration.getDefault());
+			NetcodeClient client = ncf.createChannel("test1", bouncing);
 
 			Thread.sleep(500);
 
@@ -235,7 +237,7 @@ public class ClientTest {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
-			NetcodeClient client1 = ncf.createChannel("test1", ChannelConfiguration.getDefault());
+			NetcodeClient client1 = ncf.createChannel("test1", bouncing);
 			NetcodeClient client2 = ncf.joinChannel("test2", client1.getChannelConfiguration().getChannelId());
 			Assert.assertEquals(client2.getChannelConfiguration(), client2.getChannelConfiguration());
 		} finally {
@@ -261,7 +263,7 @@ public class ClientTest {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
-			ChannelConfiguration config1 = ChannelConfiguration.getDefault();
+			ChannelConfiguration config1 = bouncing;
 			ChannelConfiguration config2 = ncf.createChannel("test1", config1).getChannelConfiguration();
 			Assert.assertEquals(config1.getMaxClients(), config2.getMaxClients());
 			Assert.assertEquals(config1.isBounceMessages(), config2.isBounceMessages());
@@ -276,7 +278,7 @@ public class ClientTest {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
 			NetcodeClientFactory ncf1 = new NetcodeClientFactory("localhost", 8888, "myApp");
-			NetcodeClient client1 = ncf1.createChannel("test1", ChannelConfiguration.getDefault());
+			NetcodeClient client1 = ncf1.createChannel("test1", bouncing);
 
 			NetcodeClientFactory ncf2 = new NetcodeClientFactory("localhost", 8888, "myOtherApp");
 			ncf2.joinChannel("test2", client1.getChannelConfiguration().getChannelId());
@@ -292,7 +294,7 @@ public class ClientTest {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
 			NetcodeClientFactory ncf1 = new NetcodeClientFactory("localhost", 8888, "myApp");
-			NetcodeClient client1 = ncf1.createChannel("test1", ChannelConfiguration.getDefault());
+			NetcodeClient client1 = ncf1.createChannel("test1", bouncing);
 			client1.send("hello there");
 			String s = (String) client1.receive().getPayload();
 			Assert.assertEquals("hello there", s);
@@ -311,7 +313,7 @@ public class ClientTest {
 					NetcodeClientFactory ncf1 = new NetcodeClientFactory("localhost", 8888, "myApp");
 					ncf1.setMessageHandler(m -> {
 					});
-					NetcodeClient client1 = ncf1.createChannel("test1", ChannelConfiguration.getDefault());
+					NetcodeClient client1 = ncf1.createChannel("test1", bouncing);
 					client1.send("hello there");
 					client1.receive();
 				} finally {
@@ -338,7 +340,7 @@ public class ClientTest {
 			NetcodeClientFactory ncf1 = new NetcodeClientFactory("localhost", 8888, "myApp");
 			ncf1.setMessageHandler(m -> {
 			});
-			NetcodeClient client = ncf1.createChannel("test1", ChannelConfiguration.getDefault());
+			NetcodeClient client = ncf1.createChannel("test1", bouncing);
 			client.send("hello there");
 			Thread.sleep(500);
 			client.setMessageHandler(null);

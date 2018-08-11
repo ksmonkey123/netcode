@@ -14,7 +14,7 @@ import lombok.ToString;
  * <li>maxClients - the number of clients that can join a channel (default:
  * Integer.MAX_VALUE)</li>
  * <li>bounceMessages - if set to true the sending client receives his own
- * messages too (default: true)</li>
+ * messages too (default: false)</li>
  * </ul>
  * When connecting the server sends an instance of this class to each client.
  * These instances also contain the ID of the connected channel.
@@ -31,7 +31,7 @@ public class ChannelConfiguration implements Serializable {
 	@Builder.Default
 	private int maxClients = Integer.MAX_VALUE;
 	@Builder.Default
-	private boolean bounceMessages = true;
+	private boolean bounceMessages = false;
 
 	private String channelId;
 
