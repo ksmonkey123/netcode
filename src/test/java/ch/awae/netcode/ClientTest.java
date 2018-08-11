@@ -98,6 +98,7 @@ public class ClientTest {
 
 	@Test
 	public void privateMessagesAreInvisibleToOthers() throws IOException, ConnectionException, InterruptedException {
+		Thread.sleep(1000);
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
@@ -221,35 +222,18 @@ public class ClientTest {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			CountingHandler ch = new CountingHandler();
+			ncf.setMessageHandler(ch);
 			NetcodeClient client = ncf.createChannel("test1", ChannelConfiguration.getDefault());
-			NetcodeClient client2 = ncf.joinChannel("test2", client.getChannelConfiguration().getChannelId());
+
 			Thread.sleep(500);
 
 			for (int i = 0; i < 50000; i++)
 				client.send(Integer.valueOf(i));
 
-			Thread.sleep(2000);
-
-			client.setMessageHandler(new MessageHandler() {
-				volatile int counter = 0;
-
-				@Override
-				public void handleMessage(Message msg) {
-					int next = ((Integer) msg.getPayload()).intValue();
-					Assert.assertEquals(counter, next);
-					counter++;
-				}
-			});
-			client2.setMessageHandler(new MessageHandler() {
-				int counter = 0;
-
-				@Override
-				public void handleMessage(Message msg) {
-					int next = ((Integer) msg.getPayload()).intValue();
-					Assert.assertEquals(counter, next);
-					counter++;
-				}
-			});
+			Thread.sleep(10000);
+			Assert.assertEquals(50000, ch.counter);
+			Assert.assertTrue(ch.ok);
 
 		} finally {
 			server.close();
@@ -300,6 +284,20 @@ public class ClientTest {
 		}
 	}
 
+}
+
+class CountingHandler implements MessageHandler {
+
+	volatile int counter = 0;
+	volatile boolean ok = true;
+
+	@Override
+	public void handleMessage(Message msg) {
+		int next = ((Integer) msg.getPayload()).intValue();
+		if (counter != next)
+			ok = false;
+		counter++;
+	}
 }
 
 class ClientJoinTrackingMH implements MessageHandler {
