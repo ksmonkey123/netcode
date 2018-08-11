@@ -1,0 +1,6 @@
+image: maven:3-jdk-8
+
+build:
+  tags:
+    - docker
+  script: "mvn install -Dgpg.skip -B"
