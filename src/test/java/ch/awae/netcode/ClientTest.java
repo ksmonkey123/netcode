@@ -30,6 +30,7 @@ public class ClientTest {
 			Assert.assertArrayEquals(new String[] { "test1" }, client1.getUsers());
 		} finally {
 			server.close();
+			Thread.sleep(500);
 		}
 
 	}
@@ -47,6 +48,7 @@ public class ClientTest {
 			});
 		} finally {
 			server.close();
+			Thread.sleep(500);
 		}
 	}
 
@@ -63,6 +65,7 @@ public class ClientTest {
 			});
 		} finally {
 			server.close();
+			Thread.sleep(500);
 		}
 	}
 
@@ -89,6 +92,7 @@ public class ClientTest {
 			});
 		} finally {
 			server.close();
+			Thread.sleep(500);
 		}
 	}
 
@@ -106,6 +110,7 @@ public class ClientTest {
 			client2.setMessageHandler(m -> Assert.assertEquals("Hello There", (String) m.getPayload()));
 		} finally {
 			server.close();
+			Thread.sleep(500);
 		}
 	}
 
@@ -124,6 +129,7 @@ public class ClientTest {
 			client2.setMessageHandler(m -> Assert.assertEquals("Hello There", (String) m.getPayload()));
 		} finally {
 			server.close();
+			Thread.sleep(500);
 		}
 	}
 
@@ -140,6 +146,7 @@ public class ClientTest {
 			client1.setMessageHandler(m -> Assert.assertEquals("Hello There", (String) m.getPayload()));
 		} finally {
 			server.close();
+			Thread.sleep(500);
 		}
 	}
 
@@ -153,6 +160,7 @@ public class ClientTest {
 			client.setMessageHandler(null);
 		} finally {
 			server.close();
+			Thread.sleep(500);
 		}
 	}
 
@@ -165,6 +173,7 @@ public class ClientTest {
 			client.sendPrivately(null, "test");
 		} finally {
 			server.close();
+			Thread.sleep(500);
 		}
 	}
 
@@ -186,6 +195,7 @@ public class ClientTest {
 
 		} finally {
 			server.close();
+			Thread.sleep(500);
 		}
 	}
 
@@ -202,6 +212,7 @@ public class ClientTest {
 			Assert.assertFalse(handler.hasLeft);
 		} finally {
 			server.close();
+			Thread.sleep(500);
 		}
 	}
 
@@ -242,6 +253,7 @@ public class ClientTest {
 
 		} finally {
 			server.close();
+			Thread.sleep(500);
 		}
 	}
 
@@ -269,6 +281,7 @@ public class ClientTest {
 			Assert.assertEquals(config1.isBounceMessages(), config2.isBounceMessages());
 		} finally {
 			server.close();
+			Thread.sleep(500);
 		}
 	}
 
@@ -283,6 +296,7 @@ public class ClientTest {
 			ncf2.joinChannel("test2", client1.getChannelConfiguration().getChannelId());
 		} finally {
 			server.close();
+			Thread.sleep(500);
 		}
 	}
 

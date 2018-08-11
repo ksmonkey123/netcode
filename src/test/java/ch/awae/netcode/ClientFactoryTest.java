@@ -202,6 +202,7 @@ public class ClientFactoryTest {
 			Assert.assertTrue(f.run);
 		} finally {
 			server.close();
+			Thread.sleep(500);
 		}
 	}
 

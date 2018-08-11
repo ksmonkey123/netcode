@@ -91,6 +91,7 @@ public class ServerFactoryTest {
 		} finally {
 			if (server != null)
 				server.close();
+			Thread.sleep(500);
 		}
 	}
 
