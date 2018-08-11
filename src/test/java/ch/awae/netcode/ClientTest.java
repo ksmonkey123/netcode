@@ -70,33 +70,6 @@ public class ClientTest {
 	}
 
 	@Test
-	public void clientJoinsAreNotStoredIfHandlerIsNull() throws IOException, ConnectionException, InterruptedException {
-		NetcodeServer server = new NetcodeServerFactory(8888).start();
-		try {
-			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
-			NetcodeClient client = ncf.createChannel("test1", ChannelConfiguration.getDefault());
-			client.send("Hello There");
-			Thread.sleep(500);
-			client.setMessageHandler(new MessageHandler() {
-
-				@Override
-				public void handleMessage(Message msg) {
-					Assert.assertEquals("Hello There", msg.getPayload());
-				}
-
-				@Override
-				public void clientJoined(String userId) {
-					Assert.fail();
-				}
-
-			});
-		} finally {
-			server.close();
-			Thread.sleep(1000);
-		}
-	}
-
-	@Test
 	public void privateMessagesAreInvisibleToOthers() throws IOException, ConnectionException, InterruptedException {
 		Thread.sleep(1000);
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
@@ -151,13 +124,28 @@ public class ClientTest {
 		}
 	}
 
-	@Test(expected = NullPointerException.class)
-	public void onceSetHandlerCannotBeNulledAgain() throws IOException, ConnectionException, InterruptedException {
+	@Test
+	public void handlerCanBeUnset() throws IOException, ConnectionException, InterruptedException {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
 			NetcodeClient client = ncf.createChannel("test1", ChannelConfiguration.getDefault());
 			client.setMessageHandler(System.out::println);
+			client.setMessageHandler(null);
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test
+	public void eventHandlerCanSetAndBeUnset() throws IOException, ConnectionException, InterruptedException {
+		NetcodeServer server = new NetcodeServerFactory(8888).start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			NetcodeClient client = ncf.createChannel("test1", ChannelConfiguration.getDefault());
+			client.setEventHandler(new ChannelEventHandler() {
+			});
 			client.setMessageHandler(null);
 		} finally {
 			server.close();
@@ -185,7 +173,7 @@ public class ClientTest {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
 			NetcodeClient client1 = ncf.createChannel("test1", ChannelConfiguration.getDefault());
 			ClientJoinTrackingMH handler = new ClientJoinTrackingMH("test2");
-			client1.setMessageHandler(handler);
+			client1.setEventHandler(handler);
 			NetcodeClient client2 = ncf.joinChannel("test2", client1.getChannelConfiguration().getChannelId());
 			Thread.sleep(500);
 			Assert.assertTrue(handler.hasJoined);
@@ -206,7 +194,7 @@ public class ClientTest {
 		try {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
 			ClientJoinTrackingMH handler = new ClientJoinTrackingMH("test1");
-			ncf.setMessageHandler(handler);
+			ncf.setEventHandler(handler);
 			ncf.createChannel("test1", ChannelConfiguration.getDefault());
 			Thread.sleep(500);
 			Assert.assertFalse(handler.hasJoined);
@@ -283,6 +271,70 @@ public class ClientTest {
 		}
 	}
 
+	@Test(timeout = 5000)
+	public void ifNoHandlerExistsQueueCanBeRead() throws IOException, ConnectionException, InterruptedException {
+		NetcodeServer server = new NetcodeServerFactory(8888).start();
+		try {
+			NetcodeClientFactory ncf1 = new NetcodeClientFactory("localhost", 8888, "myApp");
+			NetcodeClient client1 = ncf1.createChannel("test1", ChannelConfiguration.getDefault());
+			client1.send("hello there");
+			String s = (String) client1.receive().getPayload();
+			Assert.assertEquals("hello there", s);
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test
+	public void inAsyncModeSynchronousReadsBlock() throws IOException, ConnectionException, InterruptedException {
+		Thread w = new Thread(() -> {
+			try {
+				NetcodeServer server = new NetcodeServerFactory(8888).start();
+				try {
+					NetcodeClientFactory ncf1 = new NetcodeClientFactory("localhost", 8888, "myApp");
+					ncf1.setMessageHandler(m -> {
+					});
+					NetcodeClient client1 = ncf1.createChannel("test1", ChannelConfiguration.getDefault());
+					client1.send("hello there");
+					client1.receive();
+				} finally {
+					server.close();
+					Thread.sleep(500);
+				}
+			} catch (Exception e) {
+			}
+		});
+		try {
+			w.start();
+			Thread.sleep(5000);
+			Assert.assertTrue(w.isAlive());
+		} finally {
+			w.interrupt();
+		}
+	}
+
+	@Test(timeout = 5000)
+	public void syncQueueIsReactivatedOnHandlerSetToNull()
+			throws InterruptedException, IOException, ConnectionException {
+		NetcodeServer server = new NetcodeServerFactory(8888).start();
+		try {
+			NetcodeClientFactory ncf1 = new NetcodeClientFactory("localhost", 8888, "myApp");
+			ncf1.setMessageHandler(m -> {
+			});
+			NetcodeClient client = ncf1.createChannel("test1", ChannelConfiguration.getDefault());
+			client.send("hello there");
+			Thread.sleep(500);
+			client.setMessageHandler(null);
+			client.send("hi there");
+			String s = client.receive().getPayload().toString();
+			Assert.assertEquals("hi there", s);
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
 }
 
 class CountingHandler implements MessageHandler {
@@ -299,7 +351,7 @@ class CountingHandler implements MessageHandler {
 	}
 }
 
-class ClientJoinTrackingMH implements MessageHandler {
+class ClientJoinTrackingMH implements ChannelEventHandler {
 
 	public volatile boolean hasJoined = false;
 	public volatile boolean hasLeft = false;
@@ -308,11 +360,6 @@ class ClientJoinTrackingMH implements MessageHandler {
 
 	ClientJoinTrackingMH(String user) {
 		expectedUser = user;
-	}
-
-	@Override
-	public void handleMessage(Message msg) {
-		// ignore
 	}
 
 	@Override

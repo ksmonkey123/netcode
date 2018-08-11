@@ -3,6 +3,7 @@ package ch.awae.netcode;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -26,6 +27,8 @@ final class NetcodeServerImpl extends Thread implements NetcodeServer {
 				Socket s = serverSocket.accept();
 				if (open.get())
 					new ClientHandler(manager, s).start();
+			} catch (SocketException e) {
+				// ignore socket exception
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

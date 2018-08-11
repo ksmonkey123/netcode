@@ -26,6 +26,9 @@ public final class NetcodeClientFactory {
 	@Setter
 	@Getter
 	private MessageHandler messageHandler;
+	@Setter
+	@Getter
+	private ChannelEventHandler eventHandler;
 	private final String appId;
 	private final String host;
 	private final int port;
@@ -82,7 +85,7 @@ public final class NetcodeClientFactory {
 			f.accept(s);
 		if (socketMode != SocketMode.PLAIN)
 			((SSLSocket) s).startHandshake();
-		return new NetcodeClientImpl(s, messageHandler);
+		return new NetcodeClientImpl(s, messageHandler, eventHandler);
 	}
 
 	private void applySecuritySettings(SSLSocket socket) {

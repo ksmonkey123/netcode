@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.function.Consumer;
 
+import javax.net.ssl.SSLHandshakeException;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -68,6 +70,32 @@ public class ClientFactoryTest {
 			Assert.assertEquals("test", client.getUserId());
 			Thread.sleep(500);
 			Assert.assertArrayEquals(new String[] { "test" }, client.getUsers());
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test(expected = SSLHandshakeException.class)
+	public void testIncompatibleSocketModes() throws IOException, ConnectionException, InterruptedException {
+		NetcodeServer server = new NetcodeServerFactory(8888).start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			ncf.setMode(SocketMode.SSL, SecurityMode.ANY);
+			ncf.createChannel("test", ChannelConfiguration.getDefault());
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test(expected = SSLHandshakeException.class)
+	public void testIncompatibleSecurityModes() throws IOException, ConnectionException, InterruptedException {
+		NetcodeServer server = new NetcodeServerFactory(8888).start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			ncf.setMode(SocketMode.TLS, SecurityMode.CERTIFICATE);
+			ncf.createChannel("test", ChannelConfiguration.getDefault());
 		} finally {
 			server.close();
 			Thread.sleep(500);
@@ -186,8 +214,29 @@ public class ClientFactoryTest {
 		}
 	}
 
+	@Test
+	public void canSetNullHandler() {
+		new NetcodeClientFactory("localhost", 8888, "myApp").setMessageHandler(null);
+	}
+
+	@Test
+	public void canSetNonNullHandler() {
+		new NetcodeClientFactory("localhost", 8888, "myApp").setMessageHandler(System.out::println);
+	}
+
+	@Test
+	public void canSetNullEventHandler() {
+		new NetcodeClientFactory("localhost", 8888, "myApp").setEventHandler(null);
+	}
+
+	@Test
+	public void canSetNonNullEventHandler() {
+		new NetcodeClientFactory("localhost", 8888, "myApp").setEventHandler(new ChannelEventHandler() {
+		});
+	}
+
 	@Test(expected = NullPointerException.class)
-	public void cannotAddNullHandler() {
+	public void canNotAddNullRunner() {
 		new NetcodeClientFactory("localhost", 8888, "myApp").runAfterBind(null);
 	}
 

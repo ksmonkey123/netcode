@@ -3,7 +3,7 @@ package ch.awae.netcode;
 import java.io.IOException;
 import java.io.Serializable;
 
-public interface NetcodeClient {
+public interface NetcodeClientBase {
 
 	/**
 	 * Disconnect and terminate the client. After this method returns this
@@ -40,19 +40,5 @@ public interface NetcodeClient {
 	 * up to date.
 	 */
 	String[] getUsers();
-
-	/**
-	 * Replace the message handler. If no message handler has been set before
-	 * the new handler will receive the full backlog of all previous messages.
-	 * 
-	 * @param handler
-	 * @throws NullPointerException
-	 *             handler is null
-	 */
-	void setMessageHandler(MessageHandler handler);
-	
-	void setEventHandler(ChannelEventHandler handler);
-
-	Message receive() throws InterruptedException;
 
 }

@@ -13,6 +13,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import lombok.Getter;
+import lombok.Setter;
 
 final class NetcodeClientImpl extends Thread implements NetcodeClient {
 
@@ -22,12 +23,15 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	private @Getter String userId;
 	private ChannelConfiguration config;
 	private MessageHandler messageHandler;
+	private @Setter ChannelEventHandler eventHandler;
 	private final Object WRITE_LOCK = new Object();
 	private List<String> users = new ArrayList<>();
 	private BlockingQueue<MessageImpl> backlog = new LinkedBlockingQueue<>();
 
-	public NetcodeClientImpl(Socket s, MessageHandler messageHandler) throws IOException {
+	public NetcodeClientImpl(Socket s, MessageHandler messageHandler, ChannelEventHandler eventHandler)
+			throws IOException {
 		this.messageHandler = messageHandler;
+		this.eventHandler = eventHandler;
 		try {
 			this.socket = s;
 			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -54,7 +58,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 				if (msg.isManagementMessage() && msg.getPayload() instanceof GreetingMessage) {
 					GreetingMessage gm = (GreetingMessage) msg.getPayload();
 					config = gm.getConfig();
-					for(String user : gm.getUsers())
+					for (String user : gm.getUsers())
 						users.add(user);
 					break;
 				} else if (msg.isManagementMessage() && msg.getPayload() instanceof Throwable) {
@@ -83,17 +87,18 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 
 	private void handleManagementMessage(MessageImpl msg) {
 		Serializable payload = msg.getPayload();
+		ChannelEventHandler eventHandler = this.eventHandler;
 		if (payload instanceof UserChange) {
 			UserChange data = (UserChange) payload;
 			if (data.isJoined()) {
 				if (!users.contains(data.getUserId()))
 					users.add(data.getUserId());
-				if (messageHandler != null)
-					messageHandler.clientJoined(data.getUserId());
+				if (eventHandler != null)
+					eventHandler.clientJoined(data.getUserId());
 			} else {
 				users.remove(data.getUserId());
-				if (messageHandler != null)
-					messageHandler.clientLeft(data.getUserId());
+				if (eventHandler != null)
+					eventHandler.clientLeft(data.getUserId());
 			}
 		}
 	}
@@ -164,11 +169,15 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 
 	@Override
 	public void setMessageHandler(MessageHandler handler) {
-		Objects.requireNonNull(handler);
 		this.messageHandler = handler;
-		while (!backlog.isEmpty()) {
-			messageHandler.handleMessage(backlog.poll());
-		}
+		if (this.messageHandler != null)
+			while (!backlog.isEmpty())
+				messageHandler.handleMessage(backlog.poll());
+	}
+
+	@Override
+	public Message receive() throws InterruptedException {
+		return this.backlog.take();
 	}
 
 }
