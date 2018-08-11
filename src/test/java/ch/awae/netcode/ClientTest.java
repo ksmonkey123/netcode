@@ -109,6 +109,7 @@ public class ClientTest {
 
 	@Test
 	public void privateMessagesIgnoreBouncingConfig() throws IOException, ConnectionException, InterruptedException {
+		Thread.sleep(1000);
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
@@ -155,6 +156,7 @@ public class ClientTest {
 
 	@Test(expected = NullPointerException.class)
 	public void privateMessageToNullIsNotAllowed() throws IOException, ConnectionException, InterruptedException {
+		Thread.sleep(1000);
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
@@ -273,6 +275,7 @@ public class ClientTest {
 
 	@Test(timeout = 5000)
 	public void ifNoHandlerExistsQueueCanBeRead() throws IOException, ConnectionException, InterruptedException {
+		Thread.sleep(1000);
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
 			NetcodeClientFactory ncf1 = new NetcodeClientFactory("localhost", 8888, "myApp");
