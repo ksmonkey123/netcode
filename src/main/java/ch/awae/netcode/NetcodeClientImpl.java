@@ -28,6 +28,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	private final Object WRITE_LOCK = new Object();
 	private List<String> users = new ArrayList<>();
 	private BlockingQueue<MessageImpl> backlog = new LinkedBlockingQueue<>();
+	private boolean supportsPC = false;
 
 	public NetcodeClientImpl(Socket s, MessageHandler messageHandler, ChannelEventHandler eventHandler)
 			throws IOException {
@@ -46,9 +47,9 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	public void open(NetcodeHandshakeRequest request) throws IOException, ConnectionException {
 		try {
 			String line = in.readLine();
-			if (!Arrays.asList(line.split(",")).contains(Parser.PROTOCOL_VERSION_CLIENT))
-				throw new IncompatibleServerException("incompatible server version: expected '"
-						+ Parser.PROTOCOL_VERSION_CLIENT + "' but received '" + line + "'");
+			processServerVersionInfo(line);
+			if (!supportsPC && request.getConfig().isPublicChannel())
+				throw new UnsupportedFeatureException("public channels not supported by server");
 			out.println(Parser.pojo2json(request));
 			out.flush();
 			userId = request.getUserId();
@@ -84,6 +85,17 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 			throw e;
 		}
 
+	}
+
+	private void processServerVersionInfo(String line) throws IncompatibleServerException {
+		List<String> versions = Arrays.asList(line.split(","));
+
+		if (!versions.contains("NETCODE_1"))
+			throw new IncompatibleServerException("incompatible server version: expected '" + Parser.SERVER_VERSION
+					+ "' but received '" + line + "'");
+
+		if (versions.contains(Parser.PUBLIC_CHANNELS))
+			supportsPC = true;
 	}
 
 	private void handleManagementMessage(MessageImpl msg) {
@@ -203,6 +215,27 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	@Override
 	public Message tryReceive() {
 		return this.backlog.poll();
+	}
+
+	Object simpleQuery(String string) throws IOException, ConnectionException {
+		try {
+			String line = in.readLine();
+			List<String> versions = Arrays.asList(line.split(","));
+			if (!versions.contains(Parser.SIMPLE_TALK))
+				throw new UnsupportedFeatureException("simple queries not supported by server");
+			out.println(Parser.pojo2json(new NetcodeHandshakeRequest(null, null, null, false, null)));
+			out.println(string);
+			out.flush();
+			MessageImpl msg = Parser.json2pojo(in.readLine(), MessageImpl.class);
+			if (msg.getPayload() instanceof Throwable) {
+				if (msg.getPayload() instanceof ConnectionException)
+					throw (ConnectionException) msg.getPayload();
+				throw new RuntimeException((Throwable) msg.getPayload());
+			}
+			return msg.getPayload();
+		} finally {
+			socket.close();
+		}
 	}
 
 }

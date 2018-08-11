@@ -15,6 +15,7 @@ import javax.net.ssl.SSLServerSocketFactory;
 
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.val;
 
 /**
@@ -22,6 +23,8 @@ import lombok.val;
  * 
  * By default the server uses an anonymous TLS cypher. By default it accepts all
  * appIds and generates channel ids of the pattern [a-zA-Z0-9]{6}.
+ * 
+ * By default public channels are enabled.
  * 
  * @since netcode 0.1.0
  * @author Andreas Wälchli
@@ -39,6 +42,7 @@ public final class NetcodeServerFactory {
 	@Getter(AccessLevel.NONE)
 	private List<Consumer<ServerSocket>> afterBind = new ArrayList<>();
 	private final int port;
+	private @Setter boolean enablePublicChannels = true;
 
 	/**
 	 * Creates a new factory instance with a specified port number. must be in
@@ -119,7 +123,8 @@ public final class NetcodeServerFactory {
 			applySecuritySettings((SSLServerSocket) ss);
 		for (val f : afterBind)
 			f.accept(ss);
-		NetcodeServerImpl ns = new NetcodeServerImpl(ss, appIdValidator, channelIdProvider);
+		ServerCapabilities features = new ServerCapabilities(enablePublicChannels);
+		NetcodeServerImpl ns = new NetcodeServerImpl(ss, appIdValidator, channelIdProvider, features);
 		ns.start();
 		return ns;
 	}

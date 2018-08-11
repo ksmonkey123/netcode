@@ -16,10 +16,12 @@ final class ClientHandler extends Thread {
 	private final PrintWriter out;
 	private Channel channel;
 	private @Getter String userId;
+	private final ServerCapabilities features;
 
-	ClientHandler(ChannelManager manager, Socket socket) throws IOException {
+	ClientHandler(ChannelManager manager, Socket socket, ServerCapabilities features) throws IOException {
 		this.manager = manager;
 		this.socket = socket;
+		this.features = features;
 		try {
 			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			out = new PrintWriter(socket.getOutputStream());
@@ -35,7 +37,8 @@ final class ClientHandler extends Thread {
 			try {
 				runLoop();
 			} finally {
-				channel.quit(userId);
+				if (channel != null)
+					channel.quit(userId);
 			}
 		} catch (Exception e) {
 			try {
@@ -67,9 +70,15 @@ final class ClientHandler extends Thread {
 	}
 
 	private Channel performHandshake() throws IOException, ConnectionException {
-		out.println(Parser.PROTOCOL_VERSION_SERVER);
+		out.println(features.getFeaturesString(Parser.SERVER_VERSION));
 		out.flush();
 		NetcodeHandshakeRequest request = Parser.json2pojo(in.readLine(), NetcodeHandshakeRequest.class);
+		if (!request.isMaster() && request.getAppId() == null && request.getChannelId() == null
+				&& request.getUserId() == null && request.getConfig() == null) {
+			processSimpleRequest();
+			this.interrupt();
+			return null;
+		}
 		validate(request);
 		this.userId = request.getUserId();
 		Channel channel = request.isMaster() ? manager.createChannel(request.getAppId(), request.getConfig())
@@ -78,6 +87,21 @@ final class ClientHandler extends Thread {
 			throw new InvalidChannelIdException("unknown channel id: '" + request.getChannelId() + "'");
 		channel.join(request.getUserId(), this);
 		return channel;
+	}
+
+	private void processSimpleRequest()
+			throws IOException, InvalidAppIdException, UnsupportedFeatureException, InvalidRequestException {
+		String request = in.readLine();
+		if (request.startsWith("channel_list:")) {
+			if (!features.isEnablePublicChannels())
+				throw new UnsupportedFeatureException("public channels are disabled on this server");
+			String appId = request.substring(13);
+			out.println(Parser.pojo2json(MessageFactory
+					.serverMessage(manager.getPublicChannels(appId).toArray(new ChannelConfiguration[0]))));
+			out.flush();
+		} else {
+			throw new InvalidRequestException("unsupported simple query: " + request);
+		}
 	}
 
 	private void validate(NetcodeHandshakeRequest request) throws InvalidRequestException {
@@ -97,6 +121,8 @@ final class ClientHandler extends Thread {
 		ChannelConfiguration config = request.getConfig();
 		if (config.getMaxClients() < 2)
 			throw new InvalidRequestException("invalid request: at least 2 clients must be allowed");
+		if (config.isPublicChannel() && !features.isEnablePublicChannels())
+			throw new InvalidRequestException("invalid request: public channels are disabled on this server");
 	}
 
 	public void close() throws IOException {

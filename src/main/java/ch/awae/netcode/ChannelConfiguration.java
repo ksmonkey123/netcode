@@ -3,6 +3,7 @@ package ch.awae.netcode;
 import java.io.Serializable;
 
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -15,6 +16,10 @@ import lombok.ToString;
  * Integer.MAX_VALUE)</li>
  * <li>bounceMessages - if set to true the sending client receives his own
  * messages too (default: false)</li>
+ * <li>publicChannel - if set to true the channel can be discovered using
+ * channel discovery on servers with v2 and above. (default: false)</li>
+ * <li>channelName - channels can have a name set on servers with v2 and above.
+ * v1 Servers will simply ignore the channel name. (default: null)</li>
  * </ul>
  * When connecting the server sends an instance of this class to each client.
  * These instances also contain the ID of the connected channel.
@@ -25,6 +30,7 @@ import lombok.ToString;
 @Builder
 @Getter
 @ToString
+@EqualsAndHashCode
 public class ChannelConfiguration implements Serializable {
 	private static final long serialVersionUID = 1L;
 
@@ -33,7 +39,11 @@ public class ChannelConfiguration implements Serializable {
 	@Builder.Default
 	private boolean bounceMessages = false;
 
+	private boolean publicChannel;
+
 	private String channelId;
+
+	private String channelName;
 
 	public static ChannelConfiguration getDefault() {
 		return builder().build();

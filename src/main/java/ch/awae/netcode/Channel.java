@@ -21,6 +21,10 @@ final class Channel {
 		this.appId = appId;
 	}
 
+	boolean isFull() {
+		return member.get() >= config.getMaxClients();
+	}
+	
 	synchronized void join(String userId, ClientHandler handler) throws IOException, ConnectionException {
 		if (!open.get())
 			throw new IllegalStateException();
@@ -64,6 +68,10 @@ final class Channel {
 		String[] users = clients.keySet().toArray(new String[0]);
 		for (String user : users)
 			quit(user);
+	}
+	
+	ChannelConfiguration getConfig() {
+		return config;
 	}
 
 	synchronized void send(MessageImpl msg) throws IOException {

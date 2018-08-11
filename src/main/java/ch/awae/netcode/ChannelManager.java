@@ -1,6 +1,9 @@
 package ch.awae.netcode;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
@@ -47,6 +50,20 @@ final class ChannelManager {
 				break;
 		}
 		return c;
+	}
+
+	List<ChannelConfiguration> getPublicChannels(String appId) throws InvalidAppIdException {
+		if (!appIdValidator.test(appId))
+			throw new InvalidAppIdException("invalid application id: '" + appId + "'");
+		List<ChannelConfiguration> list = new ArrayList<>();
+		for (Entry<String, Channel> entry : channels.get().entrySet()) {
+			if (!entry.getKey().startsWith(appId))
+				continue;
+			Channel c = entry.getValue();
+			if (c.getConfig().isPublicChannel() && !c.isFull())
+				list.add(c.getConfig());
+		}
+		return list;
 	}
 
 	void closeChannel(String appId, String channelId) throws IOException {

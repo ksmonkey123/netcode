@@ -13,10 +13,12 @@ final class NetcodeServerImpl extends Thread implements NetcodeServer {
 	private final ServerSocket serverSocket;
 	private final AtomicBoolean open = new AtomicBoolean(true);
 	private final ChannelManager manager;
+	private ServerCapabilities features;
 
 	public NetcodeServerImpl(ServerSocket serverSocket, Predicate<String> appIdValidator,
-			Supplier<String> channelIdProvider) {
+			Supplier<String> channelIdProvider, ServerCapabilities features) {
 		this.serverSocket = serverSocket;
+		this.features = features;
 		this.manager = new ChannelManager(appIdValidator, channelIdProvider);
 	}
 
@@ -26,7 +28,7 @@ final class NetcodeServerImpl extends Thread implements NetcodeServer {
 			try {
 				Socket s = serverSocket.accept();
 				if (open.get())
-					new ClientHandler(manager, s).start();
+					new ClientHandler(manager, s, features).start();
 			} catch (SocketException e) {
 				// ignore socket exception
 			} catch (IOException e) {

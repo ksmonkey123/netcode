@@ -164,6 +164,22 @@ public final class NetcodeClientFactory {
 		return client;
 	}
 
+	/**
+	 * get a list of all public Netcode channels with at least one free slot.
+	 * 
+	 * @since netcode 2.0.0
+	 * @return
+	 * @throws IOException
+	 * @throws ConnectionException
+	 *             if the server does not support SIMPLE_QUERY (v1 servers) or
+	 *             the server has disabled public channels (v2 servers and
+	 *             above)
+	 */
+	public ChannelConfiguration[] listPublicChannels() throws IOException, ConnectionException {
+		NetcodeClientImpl client = initSocket();
+		return (ChannelConfiguration[]) client.simpleQuery("channel_list:" + appId);
+	}
+
 	private NetcodeClientImpl initSocket() throws IOException {
 		SocketFactory sf = (socketMode == SocketMode.PLAIN) ? SocketFactory.getDefault()
 				: SSLSocketFactory.getDefault();

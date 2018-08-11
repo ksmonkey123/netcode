@@ -1,6 +1,8 @@
 package ch.awae.netcode;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.Socket;
 import java.util.function.Consumer;
 
@@ -184,6 +186,35 @@ public class ClientFactoryTest {
 		}
 	}
 
+	@Test(expected = UnsupportedFeatureException.class)
+	public void cannotCreatePublicChannelIfDisabled() throws IOException, ConnectionException, InterruptedException {
+		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
+		nsf.setEnablePublicChannels(false);
+		NetcodeServer server = nsf.start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			ncf.createChannel("test1", ChannelConfiguration.builder().publicChannel(true).build());
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test
+	public void canCreatePrivateChannelIfPublicChannelsAreDisabled()
+			throws IOException, ConnectionException, InterruptedException {
+		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
+		nsf.setEnablePublicChannels(false);
+		NetcodeServer server = nsf.start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			ncf.createChannel("test1", ChannelConfiguration.getDefault());
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
 	@Test(expected = InvalidAppIdException.class)
 	public void cannotCreateChannelOnIllegalAppId() throws IOException, ConnectionException, InterruptedException {
 		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
@@ -208,6 +239,133 @@ public class ClientFactoryTest {
 		try {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
 			ncf.joinChannel("test1", "testas");
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test
+	public void canGetChannelList() throws IOException, ConnectionException, InterruptedException {
+		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
+		NetcodeServer server = nsf.start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			Assert.assertArrayEquals(new ChannelConfiguration[0], ncf.listPublicChannels());
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test(expected = InvalidAppIdException.class)
+	public void cantGetChannelListForBadAppId() throws IOException, ConnectionException, InterruptedException {
+		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
+		nsf.setAppIdValidator(s -> false);
+		NetcodeServer server = nsf.start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			ncf.listPublicChannels();
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test(expected = InvalidRequestException.class)
+	public void serverHandlesUnsupportedSimpleQueries()
+			throws IOException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			NoSuchMethodException, SecurityException, ConnectionException, InterruptedException {
+		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
+		nsf.setAppIdValidator(s -> false);
+		NetcodeServer server = nsf.start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			Method m = NetcodeClientFactory.class.getDeclaredMethod("initSocket");
+			m.setAccessible(true);
+			NetcodeClientImpl client = (NetcodeClientImpl) m.invoke(ncf);
+			client.simpleQuery("this is a stupid query");
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test
+	public void canSeeChannelListContents() throws IOException, ConnectionException, InterruptedException {
+		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
+		NetcodeServer server = nsf.start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			ncf.createChannel("test", ChannelConfiguration.builder().channelName("asdf").publicChannel(true).build());
+			ChannelConfiguration[] list = ncf.listPublicChannels();
+			Assert.assertEquals(1, list.length);
+			ChannelConfiguration config = list[0];
+			Assert.assertEquals("asdf", config.getChannelName());
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test
+	public void canJoinChannelFromChannelList() throws IOException, ConnectionException, InterruptedException {
+		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
+		NetcodeServer server = nsf.start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			ncf.createChannel("test", ChannelConfiguration.builder().channelName("asdf").publicChannel(true).build());
+			ChannelConfiguration[] list = ncf.listPublicChannels();
+			Assert.assertEquals(1, list.length);
+			Assert.assertEquals(list[0], ncf.joinChannel("test1", list[0].getChannelId()).getChannelConfiguration());
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test
+	public void cantSeePrivateChannelsInChannelListContents()
+			throws IOException, ConnectionException, InterruptedException {
+		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
+		NetcodeServer server = nsf.start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			ncf.createChannel("test", ChannelConfiguration.getDefault());
+			Assert.assertArrayEquals(new ChannelConfiguration[0], ncf.listPublicChannels());
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test
+	public void cantSeeFullChannelsInChannelListContents()
+			throws IOException, ConnectionException, InterruptedException {
+		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
+		NetcodeServer server = nsf.start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			ChannelConfiguration config = ncf.createChannel("test",
+					ChannelConfiguration.builder().channelName("asdf").publicChannel(true).maxClients(2).build())
+					.getChannelConfiguration();
+			Assert.assertEquals(1, ncf.listPublicChannels().length);
+			ncf.joinChannel("test2", config.getChannelId());
+			Assert.assertArrayEquals(new ChannelConfiguration[0], ncf.listPublicChannels());
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test(expected = UnsupportedFeatureException.class)
+	public void cantGetChannelListIfDisabled() throws IOException, ConnectionException, InterruptedException {
+		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
+		nsf.setEnablePublicChannels(false);
+		NetcodeServer server = nsf.start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			ncf.listPublicChannels();
 		} finally {
 			server.close();
 			Thread.sleep(500);
