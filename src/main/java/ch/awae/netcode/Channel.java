@@ -9,22 +9,24 @@ final class Channel {
 
 	private final ChannelConfiguration config;
 	private final ChannelManager owner;
+	private final String appId;
+	private final String creator;
 
 	private HashMap<String, ClientHandler> clients = new HashMap<>();
 	private AtomicInteger member = new AtomicInteger(0);
-	private final String appId;
 	private AtomicBoolean open = new AtomicBoolean(true);
 
-	Channel(String appId, ChannelConfiguration config, ChannelManager owner) {
+	Channel(String appId, ChannelConfiguration config, ChannelManager owner, String userId) {
 		this.config = config;
 		this.owner = owner;
 		this.appId = appId;
+		this.creator = userId;
 	}
 
 	boolean isFull() {
 		return member.get() >= config.getMaxClients();
 	}
-	
+
 	synchronized void join(String userId, ClientHandler handler) throws IOException, ConnectionException {
 		if (!open.get())
 			throw new IllegalStateException();
@@ -69,9 +71,10 @@ final class Channel {
 		for (String user : users)
 			quit(user);
 	}
-	
-	ChannelConfiguration getConfig() {
-		return config;
+
+	ChannelInformation getInfo() {
+		return new ChannelInformation(config.getChannelId(), config.getChannelName(), creator, member.get(),
+				config.getMaxClients(), config);
 	}
 
 	synchronized void send(MessageImpl msg) throws IOException {

@@ -38,30 +38,31 @@ final class ChannelManager {
 		return channels.get().get(appId + "/" + channelId);
 	}
 
-	Channel createChannel(String appId, ChannelConfiguration config) throws ConnectionException {
+	Channel createChannel(String appId, ChannelConfiguration config, String creator) throws ConnectionException {
 		if (!appIdValidator.test(appId))
 			throw new InvalidAppIdException("invalid application id: '" + appId + "'");
 		Channel c;
 		while (true) {
 			String id = channelIdProvider.get();
 			config.setChannelId(id);
-			c = new Channel(appId, config, this);
+			c = new Channel(appId, config, this, creator);
 			if (channels.get().putIfAbsent(appId + "/" + id, c) == null)
 				break;
 		}
 		return c;
 	}
 
-	List<ChannelConfiguration> getPublicChannels(String appId) throws InvalidAppIdException {
+	List<ChannelInformation> getPublicChannels(String appId) throws InvalidAppIdException {
 		if (!appIdValidator.test(appId))
 			throw new InvalidAppIdException("invalid application id: '" + appId + "'");
-		List<ChannelConfiguration> list = new ArrayList<>();
+		List<ChannelInformation> list = new ArrayList<>();
 		for (Entry<String, Channel> entry : channels.get().entrySet()) {
 			if (!entry.getKey().startsWith(appId))
 				continue;
 			Channel c = entry.getValue();
-			if (c.getConfig().isPublicChannel() && !c.isFull())
-				list.add(c.getConfig());
+			ChannelInformation info = c.getInfo();
+			if (info.getConfiguration().isPublicChannel() && !c.isFull())
+				list.add(info);
 		}
 		return list;
 	}

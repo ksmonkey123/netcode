@@ -81,7 +81,7 @@ final class ClientHandler extends Thread {
 		}
 		validate(request);
 		this.userId = request.getUserId();
-		Channel channel = request.isMaster() ? manager.createChannel(request.getAppId(), request.getConfig())
+		Channel channel = request.isMaster() ? manager.createChannel(request.getAppId(), request.getConfig(), request.getUserId())
 				: manager.getChannel(request.getAppId(), request.getChannelId());
 		if (channel == null)
 			throw new InvalidChannelIdException("unknown channel id: '" + request.getChannelId() + "'");
@@ -97,7 +97,7 @@ final class ClientHandler extends Thread {
 				throw new UnsupportedFeatureException("public channels are disabled on this server");
 			String appId = request.substring(13);
 			out.println(Parser.pojo2json(MessageFactory
-					.serverMessage(manager.getPublicChannels(appId).toArray(new ChannelConfiguration[0]))));
+					.serverMessage(manager.getPublicChannels(appId).toArray(new ChannelInformation[0]))));
 			out.flush();
 		} else {
 			throw new InvalidRequestException("unsupported simple query: " + request);

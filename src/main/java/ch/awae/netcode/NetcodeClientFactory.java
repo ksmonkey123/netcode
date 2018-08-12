@@ -175,9 +175,9 @@ public final class NetcodeClientFactory {
 	 *             the server has disabled public channels (v2 servers and
 	 *             above)
 	 */
-	public ChannelConfiguration[] listPublicChannels() throws IOException, ConnectionException {
+	public ChannelInformation[] listPublicChannels() throws IOException, ConnectionException {
 		NetcodeClientImpl client = initSocket();
-		return (ChannelConfiguration[]) client.simpleQuery("channel_list:" + appId);
+		return (ChannelInformation[]) client.simpleQuery("channel_list:" + appId);
 	}
 
 	private NetcodeClientImpl initSocket() throws IOException {
