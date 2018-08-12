@@ -1,6 +1,9 @@
 package ch.awae.netcode;
 
 import java.io.IOException;
+import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -102,7 +105,7 @@ public class ServerCommandsTest {
 			Thread.sleep(500);
 		}
 	}
-	
+
 	@Test
 	public void channelInformationIncludesCreator() throws IOException, ConnectionException, InterruptedException {
 		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
@@ -113,6 +116,26 @@ public class ServerCommandsTest {
 					ChannelConfiguration.builder().publicChannel(true).maxClients(2).build());
 			ChannelInformation myChannel = client.getChannelInformation();
 			Assert.assertEquals("test", myChannel.getCreatedBy());
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void badCommandsAreHandledByServer() throws Throwable {
+		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
+		NetcodeServer server = nsf.start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			NetcodeClient client = ncf.createChannel("test", ChannelConfiguration.getDefault());
+			Method method = client.getClass().getDeclaredMethod("runServerCommand", String.class, Serializable.class);
+			method.setAccessible(true);
+			try {
+				method.invoke(client, "this is a stupid command", null);
+			} catch (InvocationTargetException ite) {
+				throw ite.getTargetException();
+			}
 		} finally {
 			server.close();
 			Thread.sleep(500);
