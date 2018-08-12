@@ -28,7 +28,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	private final Object WRITE_LOCK = new Object();
 	private List<String> users = new ArrayList<>();
 	private BlockingQueue<MessageImpl> backlog = new LinkedBlockingQueue<>();
-	private boolean supportsPC = false;
+	private boolean supportsPC = false, supportsSC = false;
 
 	public NetcodeClientImpl(Socket s, MessageHandler messageHandler, ChannelEventHandler eventHandler)
 			throws IOException {
@@ -96,6 +96,9 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 
 		if (versions.contains(Parser.PUBLIC_CHANNELS))
 			supportsPC = true;
+
+		if (versions.contains(Parser.SERVER_COMMANDS))
+			supportsSC = true;
 	}
 
 	private void handleManagementMessage(MessageImpl msg) {

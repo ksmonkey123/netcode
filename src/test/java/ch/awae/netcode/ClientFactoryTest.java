@@ -56,6 +56,24 @@ public class ClientFactoryTest {
 	}
 
 	@Test(expected = NullPointerException.class)
+	public void userNotNull2() throws IOException, ConnectionException {
+		NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+		ncf.joinChannel(null, "stuff");
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void userNotEmpty() throws IOException, ConnectionException {
+		NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+		ncf.createChannel("", ChannelConfiguration.getDefault());
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void userNotEmpty2() throws IOException, ConnectionException {
+		NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+		ncf.joinChannel("", "stuff");
+	}
+
+	@Test(expected = NullPointerException.class)
 	public void channelConfigNotNull() throws IOException, ConnectionException {
 		NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
 		ncf.createChannel("test", null);
@@ -220,9 +238,51 @@ public class ClientFactoryTest {
 		NetcodeServer server = nsf.start();
 		try {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
-			String channel = ncf.createChannel("test1", ChannelConfiguration.getDefault()).getChannelConfiguration()
-					.getChannelId();
-			ncf.joinChannel("test1", channel);
+			ncf.createChannel("test1", ChannelConfiguration.getDefault());
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test(expected = InvalidAppIdException.class)
+	public void cannotCreateChannelWithMalformedAppId() throws IOException, ConnectionException, InterruptedException {
+		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
+		nsf.setAppIdValidator(s -> false);
+		NetcodeServer server = nsf.start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp-isSoGreat!");
+			ncf.createChannel("test1", ChannelConfiguration.getDefault());
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test
+	public void serverAcceptsValidCustomAppIdValidation()
+			throws IOException, ConnectionException, InterruptedException {
+		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
+		nsf.setAppIdValidator(s -> s.length() < 10);
+		NetcodeServer server = nsf.start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "my");
+			ncf.createChannel("test1", ChannelConfiguration.getDefault());
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test(expected = InvalidAppIdException.class)
+	public void serverRejectsMalformedAppIdEvenWithCustomValidator()
+			throws IOException, ConnectionException, InterruptedException {
+		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
+		nsf.setAppIdValidator(s -> s.length() < 10);
+		NetcodeServer server = nsf.start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "my-great");
+			ncf.createChannel("test1", ChannelConfiguration.getDefault());
 		} finally {
 			server.close();
 			Thread.sleep(500);
@@ -236,6 +296,20 @@ public class ClientFactoryTest {
 		NetcodeServer server = nsf.start();
 		try {
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			ncf.joinChannel("test1", "testas");
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test(expected = InvalidAppIdException.class)
+	public void cannotJoinChannelWithMalformedAppId() throws IOException, ConnectionException, InterruptedException {
+		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
+		nsf.setAppIdValidator(s -> false);
+		NetcodeServer server = nsf.start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp-isSoGreat!");
 			ncf.joinChannel("test1", "testas");
 		} finally {
 			server.close();

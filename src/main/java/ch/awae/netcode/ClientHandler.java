@@ -104,11 +104,13 @@ final class ClientHandler extends Thread {
 		}
 	}
 
-	private void validate(NetcodeHandshakeRequest request) throws InvalidRequestException {
+	private void validate(NetcodeHandshakeRequest request) throws InvalidRequestException, InvalidAppIdException {
 		if (request.getUserId() == null)
 			throw new InvalidRequestException("invalid request: userId may not be null");
 		if (request.getAppId() == null)
-			throw new InvalidRequestException("invalid request: userId may not be null");
+			throw new InvalidRequestException("invalid request: appId may not be null");
+		if (!request.getAppId().matches("[a-zA-Z0-9_]+"))
+			throw new InvalidAppIdException("app id must be of the pattern [a-zA-Z0-9_]+");
 		if (request.isMaster() && request.getChannelId() != null)
 			throw new InvalidRequestException(
 					"invalid request: requested channel creation but sent along a channel id");

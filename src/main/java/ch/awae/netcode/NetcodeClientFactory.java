@@ -134,6 +134,8 @@ public final class NetcodeClientFactory {
 			throws IOException, ConnectionException {
 		Objects.requireNonNull(userId);
 		Objects.requireNonNull(configuration);
+		if (userId.isEmpty())
+			throw new IllegalArgumentException("userId may not be empty");
 		NetcodeClientImpl client = initSocket();
 		client.open(new NetcodeHandshakeRequest(appId, null, userId, true, configuration));
 		return client;
@@ -159,6 +161,8 @@ public final class NetcodeClientFactory {
 	public NetcodeClient joinChannel(String userId, String channelId) throws IOException, ConnectionException {
 		Objects.requireNonNull(userId);
 		Objects.requireNonNull(channelId);
+		if (userId.isEmpty())
+			throw new IllegalArgumentException("userId may not be empty");
 		NetcodeClientImpl client = initSocket();
 		client.open(new NetcodeHandshakeRequest(appId, channelId, userId, false, null));
 		return client;

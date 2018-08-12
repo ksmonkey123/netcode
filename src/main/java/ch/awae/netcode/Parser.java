@@ -16,6 +16,7 @@ final class Parser {
 
 	final static String SERVER_VERSION = "NETCODE_1,SIMPLE_QUERY";
 	final static String PUBLIC_CHANNELS = "PUBLIC_CHANNELS";
+	final static String SERVER_COMMANDS = "SERVER_COMMANDS";
 	final static String SIMPLE_TALK = "SIMPLE_QUERY";
 
 	private final static ObjectMapper mapper = new ObjectMapper();
