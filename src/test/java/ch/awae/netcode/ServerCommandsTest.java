@@ -122,8 +122,8 @@ public class ServerCommandsTest {
 		}
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void badCommandsAreHandledByServer() throws Throwable {
+	@Test(expected = InvalidRequestException.class)
+	public void nullCommandShouldYieldIRE() throws Throwable {
 		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
 		NetcodeServer server = nsf.start();
 		try {
@@ -132,7 +132,7 @@ public class ServerCommandsTest {
 			Method method = client.getClass().getDeclaredMethod("runServerCommand", String.class, Serializable.class);
 			method.setAccessible(true);
 			try {
-				method.invoke(client, "this is a stupid command", null);
+				method.invoke(client, null, null);
 			} catch (InvocationTargetException ite) {
 				throw ite.getTargetException();
 			}

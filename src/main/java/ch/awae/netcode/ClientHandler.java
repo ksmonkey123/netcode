@@ -80,9 +80,11 @@ final class ClientHandler extends Thread {
 	}
 
 	private Serializable processServerCommand(String verb, Serializable data)
-			throws UnsupportedFeatureException, InvalidAppIdException {
+			throws UnsupportedFeatureException, InvalidAppIdException, InvalidRequestException {
 		if (!features.isEnableServerCommands())
 			throw new UnsupportedFeatureException("server commands are disabled on this server");
+		if (verb == null)
+			throw new InvalidRequestException("unknown command: " + verb);
 		// client list
 		switch (verb) {
 		case "get_channel_info":
@@ -92,7 +94,7 @@ final class ClientHandler extends Thread {
 				throw new UnsupportedFeatureException("public channels are disabled on this server");
 			return manager.getPublicChannels(appId).toArray(new ChannelInformation[0]);
 		default:
-			throw new IllegalArgumentException("unknown command: " + verb);
+			throw new InvalidRequestException("unknown command: " + verb);
 		}
 	}
 
