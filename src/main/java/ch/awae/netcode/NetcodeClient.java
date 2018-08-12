@@ -90,4 +90,32 @@ public interface NetcodeClient {
 	 */
 	Message tryReceive();
 
+	/**
+	 * Requests channel information for the current channel from the server.
+	 * This requires that server commands are enabled on the server.
+	 * 
+	 * This blocks the thread until the data becomes available.
+	 * 
+	 * @since netcode 2.0.0
+	 * @throws UnsupportedFeatureException
+	 *             the server does not support server commands
+	 * @throws InterruptedException
+	 *             the thread has been interrupted while waiting on the data
+	 */
+	ChannelInformation getChannelInformation() throws InterruptedException, ConnectionException;
+
+	/**
+	 * Requests a list of all public channels from the server. This requires
+	 * that server commands are enabled on the server.
+	 * 
+	 * This blocks the thread until the data becomes available.
+	 * 
+	 * @since netcode 2.0.0
+	 * @throws UnsupportedFeatureException
+	 *             the server does not support server commands
+	 * @throws InterruptedException
+	 *             the thread has been interrupted while waiting on the data
+	 */
+	ChannelInformation[] getPublicChannels() throws InterruptedException, ConnectionException;
+
 }

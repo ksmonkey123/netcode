@@ -95,4 +95,8 @@ final class Channel {
 		}
 	}
 
+	String[] getMembers() {
+		return clients.keySet().toArray(new String[0]);
+	}
+
 }

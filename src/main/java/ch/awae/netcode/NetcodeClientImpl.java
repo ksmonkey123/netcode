@@ -11,7 +11,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -29,6 +31,8 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	private List<String> users = new ArrayList<>();
 	private BlockingQueue<MessageImpl> backlog = new LinkedBlockingQueue<>();
 	private boolean supportsPC = false, supportsSC = false;
+	private ConcurrentHashMap<Long, Promise> pendingCommands = new ConcurrentHashMap<>();
+	private AtomicLong commandIndex = new AtomicLong();
 
 	public NetcodeClientImpl(Socket s, MessageHandler messageHandler, ChannelEventHandler eventHandler)
 			throws IOException {
@@ -117,11 +121,18 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 					if (eventHandler != null)
 						eventHandler.clientLeft(data.getUserId());
 				}
+			} else if (payload instanceof ServerCommandResponse) {
+				handleResponseToSC((ServerCommandResponse) payload);
 			}
 		} catch (Exception e) {
 			System.err.println("an error occured while processing event: " + msg);
 			e.printStackTrace();
 		}
+	}
+
+	private void handleResponseToSC(ServerCommandResponse payload) {
+		Long command = Long.valueOf(payload.getCommandId());
+		pendingCommands.remove(command).fulfill(payload.getData());
 	}
 
 	private void process(MessageImpl m) {
@@ -239,6 +250,30 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 		} finally {
 			socket.close();
 		}
+	}
+
+	private Serializable runServerCommand(String verb, Serializable data)
+			throws InterruptedException, ConnectionException {
+		if (!supportsSC)
+			throw new UnsupportedFeatureException("server commands not supported by server");
+		long id = commandIndex.incrementAndGet();
+		MessageImpl message = MessageFactory.serverMessage(new ServerCommand(id, verb, data));
+		Promise promise = new Promise();
+		if (pendingCommands.putIfAbsent(id, promise) != null)
+			throw new AssertionError("duplicate server command id");
+		out.println(Parser.pojo2json(message));
+		out.flush();
+		return promise.get();
+	}
+
+	@Override
+	public ChannelInformation[] getPublicChannels() throws InterruptedException, ConnectionException {
+		return (ChannelInformation[]) runServerCommand("get_channel_list", null);
+	}
+
+	@Override
+	public ChannelInformation getChannelInformation() throws InterruptedException, ConnectionException {
+		return (ChannelInformation) runServerCommand("get_channel_info", null);
 	}
 
 }

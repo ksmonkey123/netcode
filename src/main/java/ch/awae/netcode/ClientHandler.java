@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.net.Socket;
 
 import lombok.Getter;
@@ -16,6 +17,7 @@ final class ClientHandler extends Thread {
 	private final PrintWriter out;
 	private Channel channel;
 	private @Getter String userId;
+	private String appId;
 	private final ServerCapabilities features;
 
 	ClientHandler(ChannelManager manager, Socket socket, ServerCapabilities features) throws IOException {
@@ -61,6 +63,36 @@ final class ClientHandler extends Thread {
 				break;
 			if (!msg.isManagementMessage())
 				channel.send(msg);
+			else if (msg.getPayload() instanceof ServerCommand) {
+				ServerCommand command = (ServerCommand) msg.getPayload();
+				try {
+					Serializable data = processServerCommand(command.getVerb(), command.getData());
+					out.println(Parser.pojo2json(
+							MessageFactory.serverMessage(new ServerCommandResponse(command.getCommandId(), data))));
+					out.flush();
+				} catch (Exception e) {
+					out.println(Parser.pojo2json(
+							MessageFactory.serverMessage(new ServerCommandResponse(command.getCommandId(), e))));
+					out.flush();
+				}
+			}
+		}
+	}
+
+	private Serializable processServerCommand(String verb, Serializable data)
+			throws UnsupportedFeatureException, InvalidAppIdException {
+		if (!features.isEnableServerCommands())
+			throw new UnsupportedFeatureException("server commands are disabled on this server");
+		// client list
+		switch (verb) {
+		case "get_channel_info":
+			return channel.getInfo();
+		case "get_channel_list":
+			if (!features.isEnablePublicChannels())
+				throw new UnsupportedFeatureException("public channels are disabled on this server");
+			return manager.getPublicChannels(appId).toArray(new ChannelInformation[0]);
+		default:
+			throw new IllegalArgumentException("unknown command: " + verb);
 		}
 	}
 
@@ -81,7 +113,9 @@ final class ClientHandler extends Thread {
 		}
 		validate(request);
 		this.userId = request.getUserId();
-		Channel channel = request.isMaster() ? manager.createChannel(request.getAppId(), request.getConfig(), request.getUserId())
+		this.appId = request.getAppId();
+		Channel channel = request.isMaster()
+				? manager.createChannel(request.getAppId(), request.getConfig(), request.getUserId())
 				: manager.getChannel(request.getAppId(), request.getChannelId());
 		if (channel == null)
 			throw new InvalidChannelIdException("unknown channel id: '" + request.getChannelId() + "'");
@@ -96,8 +130,8 @@ final class ClientHandler extends Thread {
 			if (!features.isEnablePublicChannels())
 				throw new UnsupportedFeatureException("public channels are disabled on this server");
 			String appId = request.substring(13);
-			out.println(Parser.pojo2json(MessageFactory
-					.serverMessage(manager.getPublicChannels(appId).toArray(new ChannelInformation[0]))));
+			out.println(Parser.pojo2json(
+					MessageFactory.serverMessage(manager.getPublicChannels(appId).toArray(new ChannelInformation[0]))));
 			out.flush();
 		} else {
 			throw new InvalidRequestException("unsupported simple query: " + request);
