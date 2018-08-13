@@ -9,16 +9,29 @@ import java.net.Socket;
 
 import lombok.Getter;
 
+/**
+ * Server-Side Thread handling a single client connection.
+ * 
+ * Since netcode 2.0.0 this thread also handles server commands as well as
+ * short-lived connections (simple queries).
+ */
 final class ClientHandler extends Thread {
 
+    /* Fixed Fields (socket, I/O streams, ...) */
 	private final Socket socket;
 	private final ChannelManager manager;
 	private final BufferedReader in;
 	private final PrintWriter out;
-	private Channel channel;
-	private @Getter String userId;
-	private String appId;
 	private final ServerCapabilities features;
+	
+	/*
+	 * (Fixed) Fields populated only after the initial netcode handshake has
+	 * concluded. They are populated AFTER request validation. If the client
+	 * request contains a simple query these fields DO NOT get populated!
+	 */
+	private @Getter String userId;
+	private Channel channel;
+	private String appId;
 
 	ClientHandler(ChannelManager manager, Socket socket, ServerCapabilities features) throws IOException {
 		this.manager = manager;
