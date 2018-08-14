@@ -67,7 +67,7 @@ final class Channel {
 		}
 	}
 	
-	void quit(String userId) throws IOException {
+	void quit(String userId) throws IOException, InterruptedException {
 		ClientHandler client = clients.remove(userId);
 		if (client == null)
 			return;
