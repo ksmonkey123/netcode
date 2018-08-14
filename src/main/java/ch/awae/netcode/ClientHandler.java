@@ -116,7 +116,7 @@ final class ClientHandler extends Thread {
 		out.flush();
 	}
 
-	private Channel performHandshake() throws IOException, ConnectionException {
+	private Channel performHandshake() throws IOException, ConnectionException, InterruptedException {
 		out.println(features.getFeaturesString(Parser.SERVER_VERSION));
 		out.flush();
 		NetcodeHandshakeRequest request = Parser.json2pojo(in.readLine(), NetcodeHandshakeRequest.class);
