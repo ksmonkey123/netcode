@@ -20,21 +20,31 @@ import lombok.Setter;
 
 final class NetcodeClientImpl extends Thread implements NetcodeClient {
 
+    // network
 	private final Socket socket;
 	private final BufferedReader in;
 	private final PrintWriter out;
+	
+	// client/channel information
+	private final List<String> users = new ArrayList<>();
 	private @Getter String userId;
 	private ChannelConfiguration config;
-	private MessageHandler messageHandler;
-	private @Setter ChannelEventHandler eventHandler;
-	private final Object WRITE_LOCK = new Object();
-	private List<String> users = new ArrayList<>();
-	private BlockingQueue<MessageImpl> backlog = new LinkedBlockingQueue<>();
-	private boolean supportsPC = false, supportsSC = false;
+	
+	// optional server features
+	private boolean supportsPC = false;
+	private boolean supportsSC = false;
+	
+	// server commands
 	private ConcurrentHashMap<Long, Promise> pendingCommands = new ConcurrentHashMap<>();
 	private AtomicLong commandIndex = new AtomicLong();
+	
+	// message handling
+	private final Object HANDLER_LOCK = new Object();
+	private final BlockingQueue<MessageImpl> backlog = new LinkedBlockingQueue<>();
+	private MessageHandler messageHandler;
+	private @Setter ChannelEventHandler eventHandler;
 
-	public NetcodeClientImpl(Socket s, MessageHandler messageHandler, ChannelEventHandler eventHandler)
+	NetcodeClientImpl(Socket s, MessageHandler messageHandler, ChannelEventHandler eventHandler)
 			throws IOException {
 		this.messageHandler = messageHandler;
 		this.eventHandler = eventHandler;
@@ -57,7 +67,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 			out.println(Parser.pojo2json(request));
 			out.flush();
 			userId = request.getUserId();
-
+			
 			// wait for initialization data to arrive
 			while (true) {
 				MessageImpl msg = Parser.json2pojo(in.readLine(), MessageImpl.class);
@@ -138,15 +148,20 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	private void process(MessageImpl m) {
 		if (m.isManagementMessage()) {
 			handleManagementMessage(m);
-		} else if (messageHandler != null) {
-			try {
-				messageHandler.handleMessage(m);
-			} catch (Exception e) {
-				System.err.println("an error occured while processing a message: " + m);
-				e.printStackTrace();
-			}
 		} else {
-			backlog.add(m);
+		    // wait if handler is being reconfigured and catching up...
+		    synchronized(HANDLER_LOCK) {
+	        	if (messageHandler != null) {
+			        try {
+				        messageHandler.handleMessage(m);
+			        } catch (Exception e) {
+				        System.err.println("an error occured while processing a message: " + m);
+				        e.printStackTrace();
+			        }
+		        } else {
+			        backlog.add(m);
+		        }
+		    }
 		}
 	}
 
@@ -185,10 +200,8 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 
 	@Override
 	public void send(Serializable payload) {
-		synchronized (WRITE_LOCK) {
-			out.println(Parser.pojo2json(MessageFactory.normalMessage(userId, payload)));
-			out.flush();
-		}
+		out.println(Parser.pojo2json(MessageFactory.normalMessage(userId, payload)));
+		out.flush();
 	}
 
 	public String[] getUsers() {
@@ -200,25 +213,26 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 		Objects.requireNonNull(userId);
 		if (!this.users.contains(userId))
 			throw new IllegalArgumentException("unknown client: " + userId);
-		synchronized (WRITE_LOCK) {
-			out.println(Parser.pojo2json(MessageFactory.privateMessage(this.userId, userId, payload)));
-			out.flush();
-		}
+		out.println(Parser.pojo2json(MessageFactory.privateMessage(this.userId, userId, payload)));
+		out.flush();
 	}
 
 	@Override
 	public void setMessageHandler(MessageHandler handler) {
-		this.messageHandler = handler;
-		if (this.messageHandler != null)
-			while (!backlog.isEmpty()) {
-				MessageImpl m = backlog.poll();
-				try {
-					messageHandler.handleMessage(m);
-				} catch (Exception e) {
-					System.err.println("an error occured while processing a message: " + m);
-					e.printStackTrace();
-				}
-			}
+	    synchronized(HANDLER_LOCK) {
+		    this.messageHandler = handler;
+		    if (this.messageHandler != null)
+			    while (!backlog.isEmpty()) {
+				    MessageImpl m = backlog.poll();
+				    try {
+					    messageHandler.handleMessage(m);
+				    } catch (Exception e) {
+					    System.err.println("an error occured while processing a message: " + m);
+					    e.printStackTrace();
+				    }
+			    }
+	        }
+	    }
 	}
 
 	@Override
