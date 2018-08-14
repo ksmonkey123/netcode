@@ -153,7 +153,10 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 		    synchronized(HANDLER_LOCK) {
 	        	if (messageHandler != null) {
 			        try {
-				        messageHandler.handleMessage(m);
+				        if (m.isPrivateMessage())
+				            messageHandler.handlePrivateMessage(m, m.getUserId());
+				        else
+					        messageHandler.handleMessage(m);
 			        } catch (Exception e) {
 				        System.err.println("an error occured while processing a message: " + m);
 				        e.printStackTrace();
@@ -225,7 +228,10 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 			    while (!backlog.isEmpty()) {
 				    MessageImpl m = backlog.poll();
 				    try {
-					    messageHandler.handleMessage(m);
+				        if (m.isPrivateMessage())
+				            messageHandler.handlePrivateMessage(m, m.getUserId());
+				        else
+					        messageHandler.handleMessage(m);
 				    } catch (Exception e) {
 					    System.err.println("an error occured while processing a message: " + m);
 					    e.printStackTrace();
