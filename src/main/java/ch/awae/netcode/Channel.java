@@ -46,7 +46,7 @@ final class Channel {
 		notifyUserJoined(userId);
 	}
 	
-	private void sendGreetingMessage(ClientHandler handler) {
+	private void sendGreetingMessage(ClientHandler handler) throws IOException {
 	    String[] users = clients.keySet().toArray(new String[0]);
 		handler.send(MessageFactory.serverMessage(new GreetingMessage(config, users)));
 	}
@@ -95,7 +95,11 @@ final class Channel {
 	private void sendPrivateMessage(MessageImpl msg) {
 	    ClientHandler client = clients.get(msg.getTargetId());
 	    if (client != null)
-	        client.send(msg);
+	        try {
+				client.send(msg);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 	}
 	
 	private void sendPublicMessage(MessageImpl msg) {
