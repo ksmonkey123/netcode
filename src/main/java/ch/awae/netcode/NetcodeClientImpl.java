@@ -175,13 +175,13 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	private void handleQuestion(MessageImpl m) {
 	    ClientQuestion q = (ClientQuestion) m.getPayload();
 	    String from = m.getUserId();
-	    Object payload = null;
+	    Serializable payload = null;
 	    try {
 	        ClientQuestionHandler cqh = this.questionHandler;
 	        if (cqh == null)
 	            throw new UnsupportedOperationException("no question handler defined");
 	        else
-	            q = cqh.handleQuestion(from, q.getData());
+	            payload = cqh.handleQuestion(from, q.getData());
 	    } catch (Exception e) {
 	        payload = e;    
 	    }
