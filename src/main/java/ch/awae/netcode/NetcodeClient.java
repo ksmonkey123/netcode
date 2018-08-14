@@ -75,6 +75,8 @@ public interface NetcodeClient {
 	void setMessageHandler(MessageHandler handler);
 
 	void setEventHandler(ChannelEventHandler handler);
+	
+	void setQuestionHandler(ClientQuestionHandler handler);
 
 	/**
 	 * Receive the next message synchronously and wait if no message is ready.
