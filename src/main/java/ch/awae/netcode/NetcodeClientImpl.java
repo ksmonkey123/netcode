@@ -221,7 +221,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	public void setMessageHandler(MessageHandler handler) {
 	    synchronized(HANDLER_LOCK) {
 		    this.messageHandler = handler;
-		    if (this.messageHandler != null)
+		    if (this.messageHandler != null) {
 			    while (!backlog.isEmpty()) {
 				    MessageImpl m = backlog.poll();
 				    try {
@@ -234,7 +234,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	        }
 	    }
 	}
-
+	
 	@Override
 	public Message receive() throws InterruptedException {
 		return this.backlog.take();
