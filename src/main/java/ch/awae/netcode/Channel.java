@@ -5,6 +5,12 @@ import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * A single communications channel.
+ * 
+ * This class manages channel members, member limits, joining of new members
+ * as well as message transmission.
+ */
 final class Channel {
 
 	private final ChannelConfiguration config;
@@ -30,19 +36,23 @@ final class Channel {
 	synchronized void join(String userId, ClientHandler handler) throws IOException, ConnectionException {
 		if (!open.get())
 			throw new IllegalStateException();
-		int count = member.incrementAndGet();
-		if (count > config.getMaxClients()) {
-			member.decrementAndGet();
+		if (isFull())
 			throw new ChannelUserLimitReachedException("channel limit reached: " + config.getMaxClients());
-		}
 		ClientHandler old = clients.putIfAbsent(userId, handler);
-		if (old != null) {
-			member.decrementAndGet();
+		if (old != null)
 			throw new DuplicateUserIdException("duplicate username: '" + userId + "'");
-		}
-		String[] users = clients.keySet().toArray(new String[0]);
+		member.incrementAndGet();
+		sendGreetingMessage(handler);
+		notifyUserJoined(userId);
+	}
+	
+	private void sendGreetingMessage(ClientHandler handler) {
+	    String[] users = clients.keySet().toArray(new String[0]);
 		handler.send(MessageFactory.serverMessage(new GreetingMessage(config, users)));
-		Message msg = MessageFactory.serverMessage(new UserChange(userId, true));
+	}
+	
+	private void notifyUserJoined(String userId) {
+	    Message msg = MessageFactory.serverMessage(new UserChange(userId, true));
 		clients.values().forEach(c -> {
 			if (!c.getUserId().equals(userId))
 				try {
@@ -59,16 +69,14 @@ final class Channel {
 			return;
 		client.close();
 		send(MessageFactory.serverMessage(new UserChange(userId, false)));
-		if (member.decrementAndGet() <= 0) {
+		if (member.decrementAndGet() <= 0)
 			owner.closeChannel(appId, config.getChannelId());
-		}
 	}
 
 	synchronized void close() throws IOException {
 		if (!open.compareAndSet(true, false))
 			return;
-		String[] users = clients.keySet().toArray(new String[0]);
-		for (String user : users)
+		for (String user : clients.keySet().toArray(new String[0]))
 			quit(user);
 	}
 
@@ -78,21 +86,27 @@ final class Channel {
 	}
 
 	synchronized void send(MessageImpl msg) throws IOException {
-		if (msg.isPrivateMessage()) {
-			ClientHandler client = clients.get(msg.getTargetId());
-			if (client != null) {
-				client.send(msg);
-			}
-		} else {
-			clients.values().forEach(c -> {
-				if (config.isBounceMessages() || !c.getUserId().equals(msg.getUserId()))
-					try {
-						c.send(msg);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-			});
-		}
+		if (msg.isPrivateMessage())
+		    sendPrivateMessage(msg);
+		else
+			sendPublicMessage(msg);
+	}
+	
+	private void sendPrivateMessage(MessageImpl msg) {
+	    ClientHandler client = clients.get(msg.getTargetId());
+	    if (client != null)
+	        client.send(msg);
+	}
+	
+	private void sendPublicMessage(MessageImpl msg) {
+	    clients.values().forEach(c -> {
+			if (config.isBounceMessages() || !c.getUserId().equals(msg.getUserId()))
+				try {
+					c.send(msg);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+		});
 	}
 
 	String[] getMembers() {
