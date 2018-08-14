@@ -38,7 +38,7 @@ final class NetcodeServerImpl extends Thread implements NetcodeServer {
 	}
 
 	@Override
-	public void close() throws InterruptedException {
+	public void close() {
 		if (!open.compareAndSet(true, false))
 			throw new IllegalStateException("NetcodeServer instance already closed");
 		this.interrupt();
