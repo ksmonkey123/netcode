@@ -43,6 +43,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	private final BlockingQueue<MessageImpl> backlog = new LinkedBlockingQueue<>();
 	private MessageHandler messageHandler;
 	private @Setter ChannelEventHandler eventHandler;
+	private @Setter ClientQuestionHandler questionHandler;
 
 	NetcodeClientImpl(Socket s, MessageHandler messageHandler, ChannelEventHandler eventHandler)
 			throws IOException {
@@ -153,9 +154,12 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 		    synchronized(HANDLER_LOCK) {
 	        	if (messageHandler != null) {
 			        try {
-				        if (m.isPrivateMessage())
-				            messageHandler.handlePrivateMessage(m, m.getUserId());
-				        else
+				        if (m.isPrivateMessage()) {
+				            if (m.getPayload() instanceof ClientQuestion)
+				                handleQuestion(m);
+				            else
+				                messageHandler.handlePrivateMessage(m, m.getUserId());
+				        } else
 					        messageHandler.handleMessage(m);
 			        } catch (Exception e) {
 				        System.err.println("an error occured while processing a message: " + m);
@@ -166,6 +170,23 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 		        }
 		    }
 		}
+	}
+	
+	private void handleQuestion(MessageImpl m) {
+	    ClientQuestion q = (ClientQuestion) m.getPayload();
+	    String from = m.getUserId();
+	    Object payload = null;
+	    try {
+	        ClientQuestionHandler cqh = this.questionHandler;
+	        if (cqh == null)
+	            throw new UnsupportedOperationException("no question handler defined");
+	        else
+	            q = cqh.handleQuestion(from, q.getData());
+	    } catch (Exception e) {
+	        payload = e;    
+	    }
+	    out.println(Parser.pojo2json(MessageFactory.privateMessage(this.userId, from, q.response(payload))));
+		out.flush();
 	}
 
 	@Override
@@ -228,9 +249,12 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 			    while (!backlog.isEmpty()) {
 				    MessageImpl m = backlog.poll();
 				    try {
-				        if (m.isPrivateMessage())
-				            messageHandler.handlePrivateMessage(m, m.getUserId());
-				        else
+				        if (m.isPrivateMessage()) {
+				            if (m.getPayload() instanceof ClientQuestion)
+				                handleQuestion(m);
+				            else
+				                messageHandler.handlePrivateMessage(m, m.getUserId());
+				        } else
 					        messageHandler.handleMessage(m);
 				    } catch (Exception e) {
 					    System.err.println("an error occured while processing a message: " + m);
