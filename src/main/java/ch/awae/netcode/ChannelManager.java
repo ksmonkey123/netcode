@@ -21,12 +21,12 @@ final class ChannelManager {
 		this.channelIdProvider = channelIdProvider;
 	}
 
-	void closeAll() throws InterruptedException {
+	void closeAll() {
 		ConcurrentHashMap<String, Channel> oldMap = channels.getAndSet(new ConcurrentHashMap<>());
 		oldMap.forEachValue(1000, c -> {
 			try {
 				c.close();
-			} catch (IOException e) {
+			} catch (IOException | InterruptedException e) {
 				e.printStackTrace();
 			}
 		});
