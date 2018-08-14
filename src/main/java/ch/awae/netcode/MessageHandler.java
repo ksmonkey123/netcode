@@ -1,5 +1,7 @@
 package ch.awae.netcode;
 
+import java.io.Serializable;
+
 /**
  * Interface for asynchronously handling messages.
  * 
