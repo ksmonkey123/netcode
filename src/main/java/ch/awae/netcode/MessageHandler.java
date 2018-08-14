@@ -1,7 +1,5 @@
 package ch.awae.netcode;
 
-import java.io.Serializable;
-
 /**
  * Interface for asynchronously handling messages.
  * 
@@ -21,10 +19,6 @@ public interface MessageHandler {
 	 */
 	default void handlePrivateMessage(Message msg, String from) {
 	    handleMessage(msg);
-	}
-	
-	default Serializable handleQuestion(Serializable data) {
-	    throw new UnsupportedOperationException("questions not supported by this client");
 	}
 
 }
