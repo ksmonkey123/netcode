@@ -21,7 +21,7 @@ final class ChannelManager {
 		this.channelIdProvider = channelIdProvider;
 	}
 
-	void closeAll() {
+	void closeAll() throws InterruptedException {
 		ConcurrentHashMap<String, Channel> oldMap = channels.getAndSet(new ConcurrentHashMap<>());
 		oldMap.forEachValue(1000, c -> {
 			try {
@@ -67,7 +67,7 @@ final class ChannelManager {
 		return list;
 	}
 
-	void closeChannel(String appId, String channelId) throws IOException {
+	void closeChannel(String appId, String channelId) throws IOException, InterruptedException {
 		Channel channel = channels.get().remove(appId + "/" + channelId);
 		if (channel != null)
 			channel.close();
