@@ -80,7 +80,20 @@ public class ClientQuestionTest {
 		}
 	}
 	
-	
+	@Test(expected = NullPointerException.class)
+	public void testEmptyRecipient() throws IOException, ConnectionException, InterruptedException, TimeoutException {
+		NetcodeServer server = new NetcodeServerFactory(8888).start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			ncf.setTimeout(5000);
+			NetcodeClient client1 = ncf.createChannel("test1", ChannelConfiguration.getDefault());
+			
+			client1.ask(null, "test");
+		} finally {
+			server.close();
+			Thread.sleep(1000);
+		}
+	}
 
 	@Test(expected = TimeoutException.class)
 	public void testTimeout() throws IOException, ConnectionException, InterruptedException, TimeoutException {

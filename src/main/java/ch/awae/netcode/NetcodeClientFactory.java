@@ -13,7 +13,6 @@ import javax.net.ssl.SSLSocketFactory;
 
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.val;
 
 /**
@@ -25,6 +24,8 @@ import lombok.val;
  * Every client provides an application id to the Netcode server. This
  * application id is used to ensure that only compatible clients join a single
  * channel. The server may also choose to accept only certain application ids.
+ * 
+ * Most methods return the object itself to allow easy method chaining.
  * 
  * @since netcode 0.1.0
  * @author Andreas Wälchli
@@ -39,9 +40,9 @@ public final class NetcodeClientFactory {
 	@Getter(AccessLevel.NONE)
 	private List<Consumer<Socket>> afterBind = new ArrayList<>();
 
-	private @Setter MessageHandler messageHandler;
-	private @Setter ChannelEventHandler eventHandler;
-	private @Setter ClientQuestionHandler questionHandler;
+	private MessageHandler messageHandler;
+	private ChannelEventHandler eventHandler;
+	private ClientQuestionHandler questionHandler;
 	private long timeout = 60000;
 
 	private final String appId;
@@ -84,9 +85,10 @@ public final class NetcodeClientFactory {
 	 * @param runner
 	 *            the runner to add to the post-bind queue. may not be null.
 	 */
-	public void runAfterBind(Consumer<Socket> runner) {
+	public NetcodeClientFactory runAfterBind(Consumer<Socket> runner) {
 		Objects.requireNonNull(runner);
 		afterBind.add(runner);
+		return this;
 	}
 
 	/**
@@ -106,13 +108,14 @@ public final class NetcodeClientFactory {
 	 * @throws NullPointerException
 	 *             any parameter is null
 	 */
-	public void setMode(SocketMode socketMode, SecurityMode securityMode) {
+	public NetcodeClientFactory setMode(SocketMode socketMode, SecurityMode securityMode) {
 		Objects.requireNonNull(socketMode);
 		Objects.requireNonNull(securityMode);
 		if (socketMode == SocketMode.PLAIN && securityMode != SecurityMode.ANY)
 			throw new IllegalArgumentException("incompatible securityMode");
 		this.socketMode = socketMode;
 		this.securityMode = securityMode;
+		return this;
 	}
 
 	/**
@@ -215,10 +218,36 @@ public final class NetcodeClientFactory {
 		socket.setEnabledCipherSuites(ciphers.toArray(new String[0]));
 	}
 
-	public void setTimeout(long timeout) {
+	/**
+	 * Sets a new timeout value to be used for server commands and client
+	 * questions. If this is set to 0, the timeout is disabled.
+	 * 
+	 * @param timeout
+	 *            the new timeout in milliseconds
+	 * @throws IllegalArgumentException
+	 *             the timeout is negative
+	 * @see NetcodeClient#ask(String, java.io.Serializable)
+	 */
+	public NetcodeClientFactory setTimeout(long timeout) {
 		if (timeout < 0)
 			throw new IllegalArgumentException("Timeout may not be negative!");
 		this.timeout = timeout;
+		return this;
+	}
+
+	public NetcodeClientFactory setMessageHandler(MessageHandler messageHandler) {
+		this.messageHandler = messageHandler;
+		return this;
+	}
+
+	public NetcodeClientFactory setEventHandler(ChannelEventHandler eventHandler) {
+		this.eventHandler = eventHandler;
+		return this;
+	}
+
+	public NetcodeClientFactory setQuestionHandler(ClientQuestionHandler questionHandler) {
+		this.questionHandler = questionHandler;
+		return this;
 	}
 
 }

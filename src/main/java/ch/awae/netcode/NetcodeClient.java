@@ -37,6 +37,7 @@ public interface NetcodeClient {
 	 * instance may no longer be used.
 	 * 
 	 * @throws IOException
+	 *             an i/o exception occurred while disconnecting the client.
 	 */
 	void disconnect() throws IOException;
 
@@ -73,16 +74,53 @@ public interface NetcodeClient {
 	 */
 	String[] getUsers();
 
+	/**
+	 * Returns the current message handler or {@code null} if none is currently
+	 * set.
+	 * 
+	 * @since netcode 2.0.0
+	 */
 	MessageHandler getMessageHandler();
-	
+
+	/**
+	 * Replaces the message handler. If the handler is set to {@code null} the
+	 * client switches into synchronous operation and messages can be accessed
+	 * using {@link #receive()} or {@link #tryReceive()}.
+	 * 
+	 * @param handler
+	 *            the new message handler. may be null.
+	 */
 	void setMessageHandler(MessageHandler handler);
 
+	/**
+	 * Returns the current event handler or {@code null} if none is currently
+	 * set.
+	 * 
+	 * @since netcode 2.0.0
+	 */
 	ChannelEventHandler getEventHandler();
-	
+
+	/**
+	 * Replaces the event handler. may be null.
+	 */
 	void setEventHandler(ChannelEventHandler handler);
 
+	/**
+	 * Returns the current question handler or {@code null} if none is currently
+	 * set.
+	 * 
+	 * @since netcode 2.0.0
+	 */
 	ClientQuestionHandler getQuestionHandler();
-	
+
+	/**
+	 * Replaces the question handler. may be null. If the handler is set to
+	 * {@code null} client questions will always be responded to with an
+	 * {@link UnsupportedOperationException}.
+	 * 
+	 * @since netcode 2.0.0
+	 * @see #ask(String, Serializable)
+	 */
 	void setQuestionHandler(ClientQuestionHandler handler);
 
 	/**
@@ -90,33 +128,83 @@ public interface NetcodeClient {
 	 * 
 	 * Note: if this method is called while a {@link MessageHandler} is present
 	 * the call will block indefinitely.
+	 * 
+	 * @throws InterruptedException
+	 *             the calling thread has been interrupted before a message
+	 *             became available
 	 */
 	Message receive() throws InterruptedException;
 
 	/**
 	 * Receive the next message synchronously if it exists. Otherwise returns
 	 * {@code null}.
+	 * 
+	 * @see #receive()
 	 */
 	Message tryReceive();
 
+	/**
+	 * returns the current timeout value in milliseconds
+	 * 
+	 * @since netcode 2.0.0
+	 */
 	long getTimeout();
-	
+
+	/**
+	 * Sets a new timeout for server commands and client questions. If this is
+	 * set to {@code 0} the timeout will be disabled.
+	 * 
+	 * @param millis
+	 *            the new timeout in milliseconds
+	 * @throws IllegalArgumentException
+	 *             the timeout value is negative
+	 * @since netcode 2.0.0
+	 */
 	void setTimeout(long millis);
-	
+
+	/**
+	 * Sends a question to another client and awaits its response. Questions are
+	 * handled through a {@link ClientQuestionHandler}.
+	 * 
+	 * @param userId
+	 *            the client to send the question to
+	 * @param data
+	 *            the question payload
+	 * @return the response
+	 * @throws InterruptedException
+	 *             the calling thread was interrupted before a response has been
+	 *             received.
+	 * @throws TimeoutException
+	 *             the timeout has expired before a response has been received.
+	 * @throws IllegalArgumentException
+	 *             the provided userId is unknown
+	 * @throws NullPointerException
+	 *             the provided userId is null.
+	 * 
+	 * @see ClientQuestionHandler
+	 * @see #setQuestionHandler(ClientQuestionHandler)
+	 * @see #setTimeout(long)
+	 */
 	Serializable ask(String userId, Serializable data) throws InterruptedException, TimeoutException;
 
 	/**
 	 * Requests channel information for the current channel from the server.
 	 * This requires that server commands are enabled on the server.
 	 * 
-	 * This blocks the thread until the data becomes available.
+	 * This blocks the thread until the data becomes available or the timeout
+	 * has expired.
 	 * 
 	 * @since netcode 2.0.0
 	 * @throws UnsupportedFeatureException
 	 *             the server does not support server commands
 	 * @throws InterruptedException
 	 *             the thread has been interrupted while waiting on the data
-	 * @throws TimeoutException 
+	 * @throws TimeoutException
+	 *             the client has not received a response before the timeout has
+	 *             expired
+	 * @throws ConnectionException
+	 *             the request has been rejected by the server
+	 * @see #setTimeout(long)
 	 */
 	ChannelInformation getChannelInformation() throws InterruptedException, ConnectionException, TimeoutException;
 
@@ -124,14 +212,20 @@ public interface NetcodeClient {
 	 * Requests a list of all public channels from the server. This requires
 	 * that server commands are enabled on the server.
 	 * 
-	 * This blocks the thread until the data becomes available.
+	 * This blocks the thread until the data becomes available or the timeout
+	 * has expired.
 	 * 
 	 * @since netcode 2.0.0
 	 * @throws UnsupportedFeatureException
 	 *             the server does not support server commands
 	 * @throws InterruptedException
 	 *             the thread has been interrupted while waiting on the data
-	 * @throws TimeoutException 
+	 * @throws TimeoutException
+	 *             the client has not received a response before the timeout has
+	 *             expired.
+	 * @throws ConnectionException
+	 *             the request has been rejected by the server
+	 * @see #setTimeout(long)
 	 */
 	ChannelInformation[] getPublicChannels() throws InterruptedException, ConnectionException, TimeoutException;
 
