@@ -12,6 +12,33 @@ public class ClientTest {
 	static ChannelConfiguration bouncing = ChannelConfiguration.builder().bounceMessages(true).build();
 
 	@Test
+	public void canUpdateTimeout() throws IOException, ConnectionException, InterruptedException {
+		NetcodeServer server = new NetcodeServerFactory(8888).start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			NetcodeClient c = ncf.createChannel("test1", bouncing);
+			c.setTimeout(1000);
+			Assert.assertEquals(1000, c.getTimeout());
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void cantSetNegativeTimeout() throws IOException, ConnectionException, InterruptedException {
+		NetcodeServer server = new NetcodeServerFactory(8888).start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			NetcodeClient c = ncf.createChannel("test1", bouncing);
+			c.setTimeout(-1);
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+	
+	@Test
 	public void usersMustSyncWithoutHandler() throws IOException, ConnectionException, InterruptedException {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {

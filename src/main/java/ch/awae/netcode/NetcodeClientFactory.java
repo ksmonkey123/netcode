@@ -42,7 +42,7 @@ public final class NetcodeClientFactory {
 	private @Setter MessageHandler messageHandler;
 	private @Setter ChannelEventHandler eventHandler;
 	private @Setter ClientQuestionHandler questionHandler;
-	private @Setter long timeout = 60000;
+	private long timeout = 60000;
 
 	private final String appId;
 	private final String host;
@@ -213,6 +213,12 @@ public final class NetcodeClientFactory {
 			ciphers.add(c);
 		}
 		socket.setEnabledCipherSuites(ciphers.toArray(new String[0]));
+	}
+
+	public void setTimeout(long timeout) {
+		if (timeout < 0)
+			throw new IllegalArgumentException("Timeout may not be negative!");
+		this.timeout = timeout;
 	}
 
 }

@@ -17,6 +17,37 @@ public class ClientFactoryTest {
 	}
 
 	@Test(expected = IllegalArgumentException.class)
+	public void negativeTimeoutIllegal() {
+		new NetcodeClientFactory("localhost", 8888, "myApp").setTimeout(-1);
+	}
+
+	@Test
+	public void noTimeoutIsFine() {
+		NetcodeClientFactory f = new NetcodeClientFactory("localhost", 8888, "myApp");
+		f.setTimeout(0);
+		Assert.assertEquals(0, f.getTimeout());
+	}
+
+	@Test
+	public void positiveTimeoutIsFine() {
+		NetcodeClientFactory f = new NetcodeClientFactory("localhost", 8888, "myApp");
+		f.setTimeout(1000);
+		Assert.assertEquals(1000, f.getTimeout());
+	}
+
+	@Test
+	public void canSetQuestionHandler() {
+		NetcodeClientFactory f = new NetcodeClientFactory("localhost", 8888, "myApp");
+		f.setQuestionHandler((x, y) -> y);
+	}
+
+	@Test
+	public void canSetNullQuestionHandler() {
+		NetcodeClientFactory f = new NetcodeClientFactory("localhost", 8888, "myApp");
+		f.setQuestionHandler(null);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
 	public void portMayNotBeNegative() {
 		new NetcodeClientFactory("localhost", -1, "myApp");
 	}

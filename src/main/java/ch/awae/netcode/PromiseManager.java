@@ -6,13 +6,15 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.LongConsumer;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.val;
 
 class PromiseManager {
 
 	private final AtomicLong index = new AtomicLong();
 	private final ConcurrentHashMap<Long, Promise> registry = new ConcurrentHashMap<>();
-	private final long timeout;
+	private @Getter @Setter long timeout;
 
 	public PromiseManager(long timeout) {
 		this.timeout = timeout;

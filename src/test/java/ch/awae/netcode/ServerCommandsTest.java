@@ -1,9 +1,12 @@
 package ch.awae.netcode;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Assert;
@@ -140,6 +143,36 @@ public class ServerCommandsTest {
 		} finally {
 			server.close();
 			Thread.sleep(500);
+		}
+	}
+
+	@Test(expected = TimeoutException.class)
+	public void testServerCommandsCanTimeOut()
+			throws IOException, ConnectionException, InterruptedException, TimeoutException {
+		Thread server = new Thread(() -> {
+			try (ServerSocket ss = new ServerSocket(8888)) {
+				Socket s = ss.accept();
+				PrintWriter pw = new PrintWriter(s.getOutputStream());
+				pw.println("NETCODE_1,SIMPLE_QUERY,SERVER_COMMANDS,PUBLIC_CHANNELS");
+				pw.println(Parser.pojo2json(MessageFactory
+						.serverMessage(new GreetingMessage(ChannelConfiguration.getDefault(), new String[0]))));
+				pw.flush();
+				Thread.sleep(5000);
+				s.close();
+			} catch (Throwable t) {
+				t.printStackTrace();
+			}
+		});
+		try {
+			server.start();
+
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			ncf.setMode(SocketMode.PLAIN, SecurityMode.ANY);
+			ncf.setTimeout(2000);
+			NetcodeClient c = ncf.createChannel("test", ChannelConfiguration.getDefault());
+			c.getChannelInformation();
+		} finally {
+			server.join();
 		}
 	}
 

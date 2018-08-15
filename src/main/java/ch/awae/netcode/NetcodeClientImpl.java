@@ -36,9 +36,9 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	// message handling
 	private final Object HANDLER_LOCK = new Object();
 	private final BlockingQueue<MessageImpl> backlog = new LinkedBlockingQueue<>();
-	private MessageHandler messageHandler;
-	private @Setter ChannelEventHandler eventHandler;
-	private @Setter ClientQuestionHandler questionHandler;
+	private @Getter MessageHandler messageHandler;
+	private @Getter @Setter ChannelEventHandler eventHandler;
+	private @Getter @Setter ClientQuestionHandler questionHandler;
 	private final PromiseManager promises;
 
 	NetcodeClientImpl(Socket s, MessageHandler messageHandler, ChannelEventHandler eventHandler,
@@ -326,4 +326,17 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 		return (ChannelInformation) runServerCommand("get_channel_info", null);
 	}
 
+	@Override
+	public void setTimeout(long millis) {
+		if (millis < 0)
+			throw new IllegalArgumentException("timeout may not be negative!");
+		promises.setTimeout(millis);
+	}
+	
+	@Override
+	public long getTimeout() {
+		return promises.getTimeout();
+	}
+	
+	
 }

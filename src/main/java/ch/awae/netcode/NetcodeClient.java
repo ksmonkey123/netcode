@@ -73,10 +73,16 @@ public interface NetcodeClient {
 	 */
 	String[] getUsers();
 
+	MessageHandler getMessageHandler();
+	
 	void setMessageHandler(MessageHandler handler);
 
+	ChannelEventHandler getEventHandler();
+	
 	void setEventHandler(ChannelEventHandler handler);
 
+	ClientQuestionHandler getQuestionHandler();
+	
 	void setQuestionHandler(ClientQuestionHandler handler);
 
 	/**
@@ -93,6 +99,10 @@ public interface NetcodeClient {
 	 */
 	Message tryReceive();
 
+	long getTimeout();
+	
+	void setTimeout(long millis);
+	
 	Serializable ask(String userId, Serializable data) throws InterruptedException, TimeoutException;
 
 	/**
