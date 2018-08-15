@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -11,7 +12,7 @@ import org.junit.Test;
 public class ServerCommandsTest {
 
 	@Test
-	public void canGetChannelInfo() throws IOException, ConnectionException, InterruptedException {
+	public void canGetChannelInfo() throws IOException, ConnectionException, InterruptedException, TimeoutException {
 		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
 		NetcodeServer server = nsf.start();
 		try {
@@ -25,7 +26,7 @@ public class ServerCommandsTest {
 	}
 
 	@Test(expected = UnsupportedFeatureException.class)
-	public void cannotGetChannelInfoIfSCdisabled() throws IOException, ConnectionException, InterruptedException {
+	public void cannotGetChannelInfoIfSCdisabled() throws IOException, ConnectionException, InterruptedException, TimeoutException {
 		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
 		nsf.setEnableServerCommands(false);
 		NetcodeServer server = nsf.start();
@@ -41,7 +42,7 @@ public class ServerCommandsTest {
 
 	@Test(expected = UnsupportedFeatureException.class)
 	public void cannotGetChannelListWithoutPublicSupport()
-			throws IOException, ConnectionException, InterruptedException {
+			throws IOException, ConnectionException, InterruptedException, TimeoutException {
 		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
 		nsf.setEnablePublicChannels(false);
 		NetcodeServer server = nsf.start();
@@ -56,7 +57,7 @@ public class ServerCommandsTest {
 	}
 
 	@Test
-	public void canGetChannelList() throws IOException, ConnectionException, InterruptedException {
+	public void canGetChannelList() throws IOException, ConnectionException, InterruptedException, TimeoutException {
 		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
 		NetcodeServer server = nsf.start();
 		try {
@@ -70,7 +71,7 @@ public class ServerCommandsTest {
 	}
 
 	@Test
-	public void channelListShowsPublicChannels() throws IOException, ConnectionException, InterruptedException {
+	public void channelListShowsPublicChannels() throws IOException, ConnectionException, InterruptedException, TimeoutException {
 		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
 		NetcodeServer server = nsf.start();
 		try {
@@ -89,7 +90,7 @@ public class ServerCommandsTest {
 	}
 
 	@Test
-	public void channelInformationMatchesChannelList() throws IOException, ConnectionException, InterruptedException {
+	public void channelInformationMatchesChannelList() throws IOException, ConnectionException, InterruptedException, TimeoutException {
 		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
 		NetcodeServer server = nsf.start();
 		try {
@@ -107,7 +108,7 @@ public class ServerCommandsTest {
 	}
 
 	@Test
-	public void channelInformationIncludesCreator() throws IOException, ConnectionException, InterruptedException {
+	public void channelInformationIncludesCreator() throws IOException, ConnectionException, InterruptedException, TimeoutException {
 		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
 		NetcodeServer server = nsf.start();
 		try {

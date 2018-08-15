@@ -2,6 +2,7 @@ package ch.awae.netcode;
 
 import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.LongConsumer;
 
@@ -11,17 +12,32 @@ class PromiseManager {
 
 	private final AtomicLong index = new AtomicLong();
 	private final ConcurrentHashMap<Long, Promise> registry = new ConcurrentHashMap<>();
+	private final long timeout;
 
-	Serializable create(LongConsumer runner) throws InterruptedException, ConnectionException {
+	public PromiseManager(long timeout) {
+		this.timeout = timeout;
+	}
+
+	Serializable create(LongConsumer runner) throws InterruptedException, ConnectionException, TimeoutException {
 		long idx = index.incrementAndGet();
 		try {
 			val promise = new Promise();
 			registry.put(idx, promise);
 			runner.accept(idx);
 			synchronized (promise) {
-				while (promise.data == null)
-					promise.wait();
+				if (timeout > 0) {
+					long end = System.currentTimeMillis() + timeout;
+					while (promise.data == null && System.currentTimeMillis() < end) {
+						long delta = end - System.currentTimeMillis();
+						promise.wait(delta);
+					}
+				} else {
+					while (promise.data == null)
+						promise.wait();
+				}
 			}
+			if (promise.data == null)
+				throw new TimeoutException();
 			if (promise.data instanceof RuntimeException)
 				throw (RuntimeException) promise.data;
 			if (promise.data instanceof ConnectionException)

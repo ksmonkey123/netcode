@@ -33,16 +33,17 @@ import lombok.val;
 @Getter
 public final class NetcodeClientFactory {
 
-	@Getter(AccessLevel.NONE)
-	private List<Consumer<Socket>> afterBind = new ArrayList<>();
 	private SocketMode socketMode = SocketMode.TLS;
 	private SecurityMode securityMode = SecurityMode.ANONYMOUS;
-	@Setter
-	@Getter
-	private MessageHandler messageHandler;
-	@Setter
-	@Getter
-	private ChannelEventHandler eventHandler;
+
+	@Getter(AccessLevel.NONE)
+	private List<Consumer<Socket>> afterBind = new ArrayList<>();
+
+	private @Setter MessageHandler messageHandler;
+	private @Setter ChannelEventHandler eventHandler;
+	private @Setter ClientQuestionHandler questionHandler;
+	private @Setter long timeout = 60000;
+
 	private final String appId;
 	private final String host;
 	private final int port;
@@ -195,7 +196,7 @@ public final class NetcodeClientFactory {
 			f.accept(s);
 		if (socketMode != SocketMode.PLAIN)
 			((SSLSocket) s).startHandshake();
-		return new NetcodeClientImpl(s, messageHandler, eventHandler);
+		return new NetcodeClientImpl(s, messageHandler, eventHandler, questionHandler, timeout);
 	}
 
 	private void applySecuritySettings(SSLSocket socket) {

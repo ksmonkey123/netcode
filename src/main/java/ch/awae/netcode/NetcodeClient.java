@@ -2,6 +2,7 @@ package ch.awae.netcode;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.concurrent.TimeoutException;
 
 /**
  * The client instance for the Netcode system.
@@ -92,7 +93,7 @@ public interface NetcodeClient {
 	 */
 	Message tryReceive();
 
-	Serializable ask(String userId, Serializable data) throws InterruptedException;
+	Serializable ask(String userId, Serializable data) throws InterruptedException, TimeoutException;
 
 	/**
 	 * Requests channel information for the current channel from the server.
@@ -105,8 +106,9 @@ public interface NetcodeClient {
 	 *             the server does not support server commands
 	 * @throws InterruptedException
 	 *             the thread has been interrupted while waiting on the data
+	 * @throws TimeoutException 
 	 */
-	ChannelInformation getChannelInformation() throws InterruptedException, ConnectionException;
+	ChannelInformation getChannelInformation() throws InterruptedException, ConnectionException, TimeoutException;
 
 	/**
 	 * Requests a list of all public channels from the server. This requires
@@ -119,7 +121,8 @@ public interface NetcodeClient {
 	 *             the server does not support server commands
 	 * @throws InterruptedException
 	 *             the thread has been interrupted while waiting on the data
+	 * @throws TimeoutException 
 	 */
-	ChannelInformation[] getPublicChannels() throws InterruptedException, ConnectionException;
+	ChannelInformation[] getPublicChannels() throws InterruptedException, ConnectionException, TimeoutException;
 
 }

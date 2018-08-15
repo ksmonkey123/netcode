@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeoutException;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -38,11 +39,14 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	private MessageHandler messageHandler;
 	private @Setter ChannelEventHandler eventHandler;
 	private @Setter ClientQuestionHandler questionHandler;
-	private PromiseManager promises = new PromiseManager();
+	private final PromiseManager promises;
 
-	NetcodeClientImpl(Socket s, MessageHandler messageHandler, ChannelEventHandler eventHandler) throws IOException {
+	NetcodeClientImpl(Socket s, MessageHandler messageHandler, ChannelEventHandler eventHandler,
+			ClientQuestionHandler questionHandler, long timeout) throws IOException {
 		this.messageHandler = messageHandler;
 		this.eventHandler = eventHandler;
+		this.questionHandler = questionHandler;
+		this.promises = new PromiseManager(timeout);
 		try {
 			this.socket = s;
 			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -279,7 +283,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	}
 
 	private Serializable runServerCommand(String verb, Serializable data)
-			throws InterruptedException, ConnectionException {
+			throws InterruptedException, ConnectionException, TimeoutException {
 		if (!supportsSC)
 			throw new UnsupportedFeatureException("server commands not supported by server");
 		return promises.create(id -> {
@@ -290,7 +294,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	}
 
 	@Override
-	public Serializable ask(String userId, Serializable data) throws InterruptedException {
+	public Serializable ask(String userId, Serializable data) throws InterruptedException, TimeoutException {
 		try {
 			return promises.create(id -> {
 				MessageImpl message = MessageFactory.privateMessage(this.userId, userId, new ClientQuestion(id, data));
@@ -303,12 +307,13 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	}
 
 	@Override
-	public ChannelInformation[] getPublicChannels() throws InterruptedException, ConnectionException {
+	public ChannelInformation[] getPublicChannels() throws InterruptedException, ConnectionException, TimeoutException {
 		return (ChannelInformation[]) runServerCommand("get_channel_list", null);
 	}
 
 	@Override
-	public ChannelInformation getChannelInformation() throws InterruptedException, ConnectionException {
+	public ChannelInformation getChannelInformation()
+			throws InterruptedException, ConnectionException, TimeoutException {
 		return (ChannelInformation) runServerCommand("get_channel_info", null);
 	}
 
