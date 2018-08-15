@@ -164,6 +164,7 @@ public class ServerCommandsTest {
 			}
 		});
 		try {
+			server.setDaemon(true);
 			server.start();
 
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
@@ -172,7 +173,7 @@ public class ServerCommandsTest {
 			NetcodeClient c = ncf.createChannel("test", ChannelConfiguration.getDefault());
 			c.getChannelInformation();
 		} finally {
-			server.join();
+			server.join(10000);
 		}
 	}
 
