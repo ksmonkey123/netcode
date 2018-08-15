@@ -167,6 +167,8 @@ public class ServerCommandsTest {
 			server.setDaemon(true);
 			server.start();
 
+			Thread.sleep(500);
+			
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
 			ncf.setMode(SocketMode.PLAIN, SecurityMode.ANY);
 			ncf.setTimeout(2000);
