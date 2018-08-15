@@ -175,7 +175,7 @@ public class ServerCommandsTest {
 			NetcodeClient c = ncf.createChannel("test", ChannelConfiguration.getDefault());
 			c.getChannelInformation();
 		} finally {
-			server.join(10000);
+			server.join();
 		}
 	}
 
