@@ -2,7 +2,6 @@ package ch.awae.netcode;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.concurrent.TimeoutException;
 
 /**
  * The client instance for the Netcode system.
@@ -76,7 +75,7 @@ public interface NetcodeClient {
 	void setMessageHandler(MessageHandler handler);
 
 	void setEventHandler(ChannelEventHandler handler);
-	
+
 	void setQuestionHandler(ClientQuestionHandler handler);
 
 	/**
@@ -92,15 +91,8 @@ public interface NetcodeClient {
 	 * {@code null}.
 	 */
 	Message tryReceive();
-	
-	/**
-	 * sends a question to the given user and waits for a response.
-	 */
-	Serializable ask(String userId, Serializable data) throws InterruptedException, TimeoutException;
 
-    void setTimeout(long timeout);
-    
-    long getTimeout();
+	Serializable ask(String userId, Serializable data) throws InterruptedException;
 
 	/**
 	 * Requests channel information for the current channel from the server.

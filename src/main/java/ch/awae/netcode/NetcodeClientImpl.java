@@ -11,42 +11,36 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
 
 import lombok.Getter;
 import lombok.Setter;
 
 final class NetcodeClientImpl extends Thread implements NetcodeClient {
 
-    // network
+	// network
 	private final Socket socket;
 	private final BufferedReader in;
 	private final PrintWriter out;
-	
+
 	// client/channel information
 	private final List<String> users = new ArrayList<>();
 	private @Getter String userId;
 	private ChannelConfiguration config;
-	
+
 	// optional server features
 	private boolean supportsPC = false;
 	private boolean supportsSC = false;
-	
-	// server commands
-	private ConcurrentHashMap<Long, Promise> pendingCommands = new ConcurrentHashMap<>();
-	private AtomicLong commandIndex = new AtomicLong();
-	
+
 	// message handling
 	private final Object HANDLER_LOCK = new Object();
 	private final BlockingQueue<MessageImpl> backlog = new LinkedBlockingQueue<>();
 	private MessageHandler messageHandler;
 	private @Setter ChannelEventHandler eventHandler;
 	private @Setter ClientQuestionHandler questionHandler;
+	private PromiseManager promises = new PromiseManager();
 
-	NetcodeClientImpl(Socket s, MessageHandler messageHandler, ChannelEventHandler eventHandler)
-			throws IOException {
+	NetcodeClientImpl(Socket s, MessageHandler messageHandler, ChannelEventHandler eventHandler) throws IOException {
 		this.messageHandler = messageHandler;
 		this.eventHandler = eventHandler;
 		try {
@@ -68,7 +62,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 			out.println(Parser.pojo2json(request));
 			out.flush();
 			userId = request.getUserId();
-			
+
 			// wait for initialization data to arrive
 			while (true) {
 				MessageImpl msg = Parser.json2pojo(in.readLine(), MessageImpl.class);
@@ -142,50 +136,52 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	}
 
 	private void handleResponseToSC(ServerCommandResponse payload) {
-		Long command = Long.valueOf(payload.getCommandId());
-		pendingCommands.remove(command).fulfill(payload.getData());
+		promises.fulfill(payload.getCommandId(), payload.getData());
 	}
 
 	private void process(MessageImpl m) {
 		if (m.isManagementMessage()) {
 			handleManagementMessage(m);
 		} else {
-		    // wait if handler is being reconfigured and catching up...
-		    synchronized(HANDLER_LOCK) {
-	        	if (messageHandler != null) {
-			        try {
-				        if (m.isPrivateMessage()) {
-				            if (m.getPayload() instanceof ClientQuestion)
-				                handleQuestion(m);
-				            else
-				                messageHandler.handlePrivateMessage(m, m.getUserId());
-				        } else
-					        messageHandler.handleMessage(m);
-			        } catch (Exception e) {
-				        System.err.println("an error occured while processing a message: " + m);
-				        e.printStackTrace();
-			        }
-		        } else {
-			        backlog.add(m);
-		        }
-		    }
+			// wait if handler is being reconfigured and catching up...
+			synchronized (HANDLER_LOCK) {
+				if (messageHandler != null) {
+					handleMessage(m);
+				} else {
+					backlog.add(m);
+				}
+			}
 		}
 	}
-	
+
+	private void handleMessage(MessageImpl m) {
+		try {
+			if (m.getPayload() instanceof ClientQuestion)
+				handleQuestion(m);
+			else if (m.isPrivateMessage())
+				messageHandler.handlePrivateMessage(m, m.getUserId());
+			else
+				messageHandler.handleMessage(m);
+		} catch (Exception e) {
+			System.err.println("an error occured while processing a message: " + m);
+			e.printStackTrace();
+		}
+	}
+
 	private void handleQuestion(MessageImpl m) {
-	    ClientQuestion q = (ClientQuestion) m.getPayload();
-	    String from = m.getUserId();
-	    Serializable payload = null;
-	    try {
-	        ClientQuestionHandler cqh = this.questionHandler;
-	        if (cqh == null)
-	            throw new UnsupportedOperationException("no question handler defined");
-	        else
-	            payload = cqh.handleQuestion(from, q.getData());
-	    } catch (Exception e) {
-	        payload = e;    
-	    }
-	    out.println(Parser.pojo2json(MessageFactory.privateMessage(this.userId, from, q.response(payload))));
+		ClientQuestion q = (ClientQuestion) m.getPayload();
+		String from = m.getUserId();
+		Serializable payload = null;
+		try {
+			ClientQuestionHandler cqh = this.questionHandler;
+			if (cqh == null)
+				throw new UnsupportedOperationException("no question handler defined");
+			else
+				payload = cqh.handleQuestion(from, q.getData());
+		} catch (Exception e) {
+			payload = e;
+		}
+		out.println(Parser.pojo2json(MessageFactory.privateMessage(this.userId, from, q.response(payload))));
 		out.flush();
 	}
 
@@ -243,28 +239,14 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 
 	@Override
 	public void setMessageHandler(MessageHandler handler) {
-	    synchronized(HANDLER_LOCK) {
-		    this.messageHandler = handler;
-		    if (this.messageHandler != null) {
-			    while (!backlog.isEmpty()) {
-				    MessageImpl m = backlog.poll();
-				    try {
-				        if (m.isPrivateMessage()) {
-				            if (m.getPayload() instanceof ClientQuestion)
-				                handleQuestion(m);
-				            else
-				                messageHandler.handlePrivateMessage(m, m.getUserId());
-				        } else
-					        messageHandler.handleMessage(m);
-				    } catch (Exception e) {
-					    System.err.println("an error occured while processing a message: " + m);
-					    e.printStackTrace();
-				    }
-			    }
-	        }
-	    }
+		synchronized (HANDLER_LOCK) {
+			this.messageHandler = handler;
+			if (this.messageHandler != null)
+				while (!backlog.isEmpty())
+					handleMessage(backlog.poll());
+		}
 	}
-	
+
 	@Override
 	public Message receive() throws InterruptedException {
 		return this.backlog.take();
@@ -300,14 +282,24 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 			throws InterruptedException, ConnectionException {
 		if (!supportsSC)
 			throw new UnsupportedFeatureException("server commands not supported by server");
-		long id = commandIndex.incrementAndGet();
-		MessageImpl message = MessageFactory.serverMessage(new ServerCommand(id, verb, data));
-		Promise promise = new Promise();
-		if (pendingCommands.putIfAbsent(id, promise) != null)
-			throw new AssertionError("duplicate server command id");
-		out.println(Parser.pojo2json(message));
-		out.flush();
-		return promise.get();
+		return promises.create(id -> {
+			MessageImpl message = MessageFactory.serverMessage(new ServerCommand(id, verb, data));
+			out.println(Parser.pojo2json(message));
+			out.flush();
+		});
+	}
+
+	@Override
+	public Serializable ask(String userId, Serializable data) throws InterruptedException {
+		try {
+			return promises.create(id -> {
+				MessageImpl message = MessageFactory.privateMessage(this.userId, userId, new ClientQuestion(id, data));
+				out.println(Parser.pojo2json(message));
+				out.flush();
+			});
+		} catch (ConnectionException ce) {
+			throw new RuntimeException(ce);
+		}
 	}
 
 	@Override
