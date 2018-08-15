@@ -82,6 +82,8 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 					throw new RuntimeException((Throwable) msg.getPayload());
 				} else if (msg.isManagementMessage()) {
 					handleManagementMessage(msg);
+				} else if (msg.getPayload() instanceof ClientQuestion) {
+					handleQuestion(msg);
 				} else {
 					backlog.add(msg);
 				}
@@ -149,6 +151,10 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 		} else {
 			// wait if handler is being reconfigured and catching up...
 			synchronized (HANDLER_LOCK) {
+				if (m.getPayload() instanceof ClientQuestion)
+					handleQuestion(m);
+				if (m.getPayload() instanceof ClientAnswer)
+					handleAnswer(m);
 				if (messageHandler != null) {
 					handleMessage(m);
 				} else {
@@ -158,10 +164,17 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 		}
 	}
 
+	private void handleAnswer(MessageImpl m) {
+		ClientAnswer answer = (ClientAnswer) m.getPayload();
+		promises.fulfill(answer.getQuestionId(), answer.getData());
+	}
+
 	private void handleMessage(MessageImpl m) {
 		try {
 			if (m.getPayload() instanceof ClientQuestion)
 				handleQuestion(m);
+			if (m.getPayload() instanceof ClientAnswer)
+				handleAnswer(m);
 			else if (m.isPrivateMessage())
 				messageHandler.handlePrivateMessage(m, m.getUserId());
 			else
@@ -296,11 +309,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	@Override
 	public Serializable ask(String userId, Serializable data) throws InterruptedException, TimeoutException {
 		try {
-			return promises.create(id -> {
-				MessageImpl message = MessageFactory.privateMessage(this.userId, userId, new ClientQuestion(id, data));
-				out.println(Parser.pojo2json(message));
-				out.flush();
-			});
+			return promises.create(id -> sendPrivately(userId, new ClientQuestion(id, data)));
 		} catch (ConnectionException ce) {
 			throw new RuntimeException(ce);
 		}
