@@ -99,6 +99,8 @@ public class ClientQuestionTest {
 				}
 				return y;
 			});
+			
+			Thread.sleep(500);
 
 			client1.ask("test2", "test");
 
@@ -140,6 +142,8 @@ public class ClientQuestionTest {
 				throw new NullPointerException();
 			});
 
+			Thread.sleep(500);
+			
 			client1.ask("test2", "test");
 
 		} finally {
