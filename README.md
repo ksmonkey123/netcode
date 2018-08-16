@@ -3,9 +3,9 @@ The _Netcode_ library attempts to simplify communication between multiple instan
 _Netcode_ essentially provides a chat service for machine-to-machine communication.
 
 ## Operation
-_Netcode_ requires a single (publicly reachable) server instance (`NetcodeServer`). This server is the
+_Netcode_ requires a single (publicly reachable) server instance. This server is the
 central node that all application instances connect to. All instances (or clients) can create new
-_channels_ or join existing _channels_. Since version `2.0.0` the _Netcode_ server also supports
+_channels_ or join existing _channels_. Since version 2.0.0 the _Netcode_ server also supports
 _channel discovery_.
 
 _Netcode_ allows a lot of customisation both for servers and for clients. This includes choosing between
