@@ -5,6 +5,7 @@ _Last updated: 2018/08/17_
  - Fixed a Bug where client questions and answers would leak into the normal message processing.
  - Delayed C/Q processing during setup until after the initial handshake has been completed but before any queued messages get processed.
  - Added `NetcodeClientFactory` cloning.
+ - Fixed a Bug where the server would attempt to deserialize the message and fail unless only JRE types are involved.
 
 ## 2.0.0
  - Introduced Public Channels and Channel Discovery.
