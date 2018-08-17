@@ -1,6 +1,7 @@
 # Changelog
 _Last updated: 2018/08/17_
 
+
 ## 2.0.1
  - Fixed a Bug where client questions and answers would leak into the normal message processing.
  - Delayed C/Q processing during setup until after the initial handshake has been completed but before any queued messages get processed.
