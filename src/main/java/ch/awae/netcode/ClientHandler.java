@@ -71,7 +71,7 @@ final class ClientHandler extends Thread {
 			String l = in.readLine();
 			if (l == null)
 				break;
-			MessageImpl msg = Parser.json2pojo(l, MessageImpl.class);
+			SSMessageImpl msg = Parser.json2pojo(l, SSMessageImpl.class);
 			if (Thread.interrupted())
 				break;
 			if (!msg.isManagementMessage())

@@ -72,7 +72,7 @@ final class Channel {
 		if (client == null)
 			return;
 		client.close();
-		send(MessageFactory.serverMessage(new UserChange(userId, false)));
+		sendPublicMessage(MessageFactory.serverMessage(new UserChange(userId, false)));
 		if (memberCount.decrementAndGet() <= 0)
 			owner.closeChannel(appId, config.getChannelId());
 	}
@@ -89,7 +89,7 @@ final class Channel {
 		}
 	}
 
-	void send(MessageImpl msg) {
+	void send(SSMessageImpl msg) {
 		if (msg.isPrivateMessage())
 		    sendPrivateMessage(msg);
 		else
@@ -107,7 +107,7 @@ final class Channel {
 
     /* ### MESSAGE SENDING SUBROUTINES ### */
     
-	private void sendPrivateMessage(MessageImpl msg) {
+	private void sendPrivateMessage(SSMessageImpl msg) {
 	    ClientHandler client = clients.get(msg.getTargetId());
 	    if (client != null)
 	        try {
@@ -117,7 +117,7 @@ final class Channel {
 			}
 	}
 	
-	private void sendPublicMessage(MessageImpl msg) {
+	private void sendPublicMessage(Message msg) {
 	    clients.values().forEach(c -> {
 			if (config.isBounceMessages() || !c.getUserId().equals(msg.getUserId()))
 				try {

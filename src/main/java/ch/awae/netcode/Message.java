@@ -70,6 +70,25 @@ final class MessageImpl implements Message {
 
 }
 
+@Setter
+@Getter
+@ToString
+@AllArgsConstructor
+@NoArgsConstructor
+final class SSMessageImpl implements Message {
+	private String userId, targetId;
+	private Timestamp time;
+	private boolean privateMessage;
+	private boolean managementMessage;	
+	private byte[] data;
+	
+	@Override
+	@JsonIgnore
+	public Serializable getPayload() {
+		return (Serializable) Parser.array2pojo(data);
+	}
+}
+
 @Data
 @AllArgsConstructor
 final class UserChange implements Serializable {
