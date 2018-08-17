@@ -12,6 +12,7 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.val;
 
@@ -32,6 +33,7 @@ import lombok.val;
  * @see NetcodeClient
  */
 @Getter
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NetcodeClientFactory {
 
 	private SocketMode socketMode = SocketMode.TLS;
@@ -52,12 +54,9 @@ public final class NetcodeClientFactory {
 	/**
 	 * Creates a new factory with the given host and port information and appId.
 	 * 
-	 * @param host
-	 *            the server address. may not be null.
-	 * @param port
-	 *            the port number of the server. must be in the range 0-65535.
-	 * @param appId
-	 *            the application id to use for this client. may not be null.
+	 * @param host  the server address. may not be null.
+	 * @param port  the port number of the server. must be in the range 0-65535.
+	 * @param appId the application id to use for this client. may not be null.
 	 */
 	public NetcodeClientFactory(String host, int port, String appId) {
 		Objects.requireNonNull(host);
@@ -72,18 +71,17 @@ public final class NetcodeClientFactory {
 	/**
 	 * Adds a function to the post-bind queue.
 	 * 
-	 * The post-bind queue allows access to the {@link Socket} or
-	 * {@link SSLSocket} as soon as it is created (but for SSLSockets before the
-	 * handshake). This allows arbitrary modification of the socket
-	 * configuration. This is especially useful for SSLSockets where more
-	 * control over the security configuration may be desired.
+	 * The post-bind queue allows access to the {@link Socket} or {@link SSLSocket}
+	 * as soon as it is created (but for SSLSockets before the handshake). This
+	 * allows arbitrary modification of the socket configuration. This is especially
+	 * useful for SSLSockets where more control over the security configuration may
+	 * be desired.
 	 * 
-	 * If the socket mode is set to {@link SocketMode#PLAIN}, the passed socket
-	 * will be of type {@link Socket}, for all other modes it will be a
+	 * If the socket mode is set to {@link SocketMode#PLAIN}, the passed socket will
+	 * be of type {@link Socket}, for all other modes it will be a
 	 * {@link SSLSocket}.
 	 * 
-	 * @param runner
-	 *            the runner to add to the post-bind queue. may not be null.
+	 * @param runner the runner to add to the post-bind queue. may not be null.
 	 */
 	public NetcodeClientFactory runAfterBind(Consumer<Socket> runner) {
 		Objects.requireNonNull(runner);
@@ -93,20 +91,17 @@ public final class NetcodeClientFactory {
 
 	/**
 	 * Specifies both the socket mode and the security mode to use for new
-	 * connections. The socket mode specifies if a plain (unencrypted)
-	 * connection, SSL, TLS or both (SSL or TLS) should be used. The security
-	 * mode specifies for secured (TLS/SSL) sockets if an anonymous cipher, a
-	 * certificate-based cipher (or both) is acceptable. This information is
-	 * used to negociate a cipher that is acceptable to both the server and the
-	 * client.
+	 * connections. The socket mode specifies if a plain (unencrypted) connection,
+	 * SSL, TLS or both (SSL or TLS) should be used. The security mode specifies for
+	 * secured (TLS/SSL) sockets if an anonymous cipher, a certificate-based cipher
+	 * (or both) is acceptable. This information is used to negociate a cipher that
+	 * is acceptable to both the server and the client.
 	 * 
-	 * If socketMode is set to {@link SocketMode#PLAIN}, then the securityMode
-	 * must be set to {@link SecurityMode#ANY}.
+	 * If socketMode is set to {@link SocketMode#PLAIN}, then the securityMode must
+	 * be set to {@link SecurityMode#ANY}.
 	 * 
-	 * @throws IllegalArgumentException
-	 *             an illegal combination has been provided
-	 * @throws NullPointerException
-	 *             any parameter is null
+	 * @throws IllegalArgumentException an illegal combination has been provided
+	 * @throws NullPointerException     any parameter is null
 	 */
 	public NetcodeClientFactory setMode(SocketMode socketMode, SecurityMode securityMode) {
 		Objects.requireNonNull(socketMode);
@@ -119,20 +114,18 @@ public final class NetcodeClientFactory {
 	}
 
 	/**
-	 * Creates a new Netcode channel. This does not consume this factory and it
-	 * can therefore be re-used.
+	 * Creates a new Netcode channel. This does not consume this factory and it can
+	 * therefore be re-used.
 	 * 
-	 * @param userId
-	 *            the userId for this client. may not be null.
-	 * @param configuration
-	 *            the channel configuration to use.
+	 * @param userId        the userId for this client. may not be null.
+	 * @param configuration the channel configuration to use.
 	 * @return an initialised client instance.
-	 * @throws IOException
-	 *             an exception occured in the unterlying I/O elements.
-	 * @throws ConnectionException
-	 *             a netcode connection could not be established. Usually this
-	 *             indicates that some client data was rejected by the server.
-	 *             See the exception type and message for more information.
+	 * @throws IOException         an exception occured in the unterlying I/O
+	 *                             elements.
+	 * @throws ConnectionException a netcode connection could not be established.
+	 *                             Usually this indicates that some client data was
+	 *                             rejected by the server. See the exception type
+	 *                             and message for more information.
 	 */
 	public NetcodeClient createChannel(String userId, ChannelConfiguration configuration)
 			throws IOException, ConnectionException {
@@ -146,21 +139,19 @@ public final class NetcodeClientFactory {
 	}
 
 	/**
-	 * Joins an existing Netcode channel. This does not consume this factory and
-	 * it can therefore be re-used.
+	 * Joins an existing Netcode channel. This does not consume this factory and it
+	 * can therefore be re-used.
 	 * 
-	 * @param userId
-	 *            the userId for this client. may not be null.
-	 * @param channelId
-	 *            the id of the channel to join. Channel IDs are generated by
-	 *            the server upon channel generation.
+	 * @param userId    the userId for this client. may not be null.
+	 * @param channelId the id of the channel to join. Channel IDs are generated by
+	 *                  the server upon channel generation.
 	 * @return an initialised client instance.
-	 * @throws IOException
-	 *             an exception occured in the unterlying I/O elements.
-	 * @throws ConnectionException
-	 *             a netcode connection could not be established. Usually this
-	 *             indicates that some client data was rejected by the server.
-	 *             See the exception type and message for more information.
+	 * @throws IOException         an exception occured in the unterlying I/O
+	 *                             elements.
+	 * @throws ConnectionException a netcode connection could not be established.
+	 *                             Usually this indicates that some client data was
+	 *                             rejected by the server. See the exception type
+	 *                             and message for more information.
 	 */
 	public NetcodeClient joinChannel(String userId, String channelId) throws IOException, ConnectionException {
 		Objects.requireNonNull(userId);
@@ -178,10 +169,9 @@ public final class NetcodeClientFactory {
 	 * @since netcode 2.0.0
 	 * @return
 	 * @throws IOException
-	 * @throws ConnectionException
-	 *             if the server does not support SIMPLE_QUERY (v1 servers) or
-	 *             the server has disabled public channels (v2 servers and
-	 *             above)
+	 * @throws ConnectionException if the server does not support SIMPLE_QUERY (v1
+	 *                             servers) or the server has disabled public
+	 *                             channels (v2 servers and above)
 	 */
 	public ChannelInformation[] listPublicChannels() throws IOException, ConnectionException {
 		NetcodeClientImpl client = initSocket();
@@ -219,13 +209,11 @@ public final class NetcodeClientFactory {
 	}
 
 	/**
-	 * Sets a new timeout value to be used for server commands and client
-	 * questions. If this is set to 0, the timeout is disabled.
+	 * Sets a new timeout value to be used for server commands and client questions.
+	 * If this is set to 0, the timeout is disabled.
 	 * 
-	 * @param timeout
-	 *            the new timeout in milliseconds
-	 * @throws IllegalArgumentException
-	 *             the timeout is negative
+	 * @param timeout the new timeout in milliseconds
+	 * @throws IllegalArgumentException the timeout is negative
 	 * @see NetcodeClient#ask(String, java.io.Serializable)
 	 */
 	public NetcodeClientFactory setTimeout(long timeout) {
@@ -248,6 +236,11 @@ public final class NetcodeClientFactory {
 	public NetcodeClientFactory setQuestionHandler(ClientQuestionHandler questionHandler) {
 		this.questionHandler = questionHandler;
 		return this;
+	}
+
+	public NetcodeClientFactory copy() {
+		return new NetcodeClientFactory(socketMode, securityMode, new ArrayList<>(afterBind), messageHandler,
+				eventHandler, questionHandler, timeout, appId, host, port);
 	}
 
 }
