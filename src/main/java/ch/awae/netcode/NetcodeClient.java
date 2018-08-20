@@ -187,6 +187,31 @@ public interface NetcodeClient {
 	 */
 	Serializable ask(String userId, Serializable data) throws InterruptedException, TimeoutException;
 
+    /**
+     * Sends a question to another client, awaits its repsonse and casts the
+     * response to the provided type. Questions are handled through a
+     * {@link ClientQuestionHandler}.
+     * 
+     * @param userId the client to send the question to
+     * @param data the question payload
+     * @param responseType the type of the response payload
+     * @return the response cast to the responseType
+     * @throws InterruptedException
+	 *             the calling thread was interrupted before a response has been
+	 *             received.
+	 * @throws TimeoutException
+	 *             the timeout has expired before a response has been received.
+	 * @throws IllegalArgumentException
+	 *             the provided userId is unknown
+	 * @throws NullPointerException
+	 *             the provided userId is null.
+	 * 
+	 * @see ClientQuestionHandler
+	 * @see #setQuestionHandler(ClientQuestionHandler)
+	 * @see #setTimeout(long)
+     */
+    <T> T ask(String userId, Serializable data, Class<T> responseType) throws InterruptedException, TimeoutException;
+
 	/**
 	 * Requests channel information for the current channel from the server.
 	 * This requires that server commands are enabled on the server.
