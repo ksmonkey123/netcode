@@ -319,6 +319,11 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 			throw new RuntimeException(ce);
 		}
 	}
+	
+	@Override
+	public <T extends Serializable> T ask(String userId, Serializable data, Class<T> responseType) throws InterruptedException, TimeoutException {
+	    responseType.cast(ask(userId, data));
+	}
 
 	@Override
 	public ChannelInformation[] getPublicChannels() throws InterruptedException, ConnectionException, TimeoutException {
