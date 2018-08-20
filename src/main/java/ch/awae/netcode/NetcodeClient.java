@@ -210,7 +210,7 @@ public interface NetcodeClient {
 	 * @see #setQuestionHandler(ClientQuestionHandler)
 	 * @see #setTimeout(long)
      */
-    <T> T ask(String userId, Serializable data, Class<T> responseType) throws InterruptedException, TimeoutException;
+    <T extends Serializable> T ask(String userId, Serializable data, Class<T> responseType) throws InterruptedException, TimeoutException;
 
 	/**
 	 * Requests channel information for the current channel from the server.
