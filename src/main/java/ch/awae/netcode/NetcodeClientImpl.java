@@ -322,7 +322,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	
 	@Override
 	public <T extends Serializable> T ask(String userId, Serializable data, Class<T> responseType) throws InterruptedException, TimeoutException {
-	    responseType.cast(ask(userId, data));
+	    return responseType.cast(ask(userId, data));
 	}
 
 	@Override
