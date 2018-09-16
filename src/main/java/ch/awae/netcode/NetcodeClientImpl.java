@@ -237,8 +237,11 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 
 	@Override
 	public void send(Serializable payload) {
-		out.println(Parser.pojo2json(MessageFactory.normalMessage(userId, payload)));
-		out.flush();
+		if (config.isBounceMessages() || users.size() > 1) {
+			// only send if bouncing or at least one other client is in the channel
+			out.println(Parser.pojo2json(MessageFactory.normalMessage(userId, payload)));
+			out.flush();
+		}
 	}
 
 	public String[] getUsers() {
@@ -332,11 +335,10 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 			throw new IllegalArgumentException("timeout may not be negative!");
 		promises.setTimeout(millis);
 	}
-	
+
 	@Override
 	public long getTimeout() {
 		return promises.getTimeout();
 	}
-	
-	
+
 }
