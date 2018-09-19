@@ -8,6 +8,14 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+/**
+ * Representation of a user in a channel.
+ * 
+ * This object directly supports private communications with the user.
+ * 
+ * @since netcode 2.1.0
+ * @author Andreas Wälchli
+ */
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 public final class UserRef {
 

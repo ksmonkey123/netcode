@@ -353,6 +353,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 
 	@Override
 	public UserRef getUserRef(String userId) {
+		Objects.requireNonNull(userId);
 		if (!users.contains(userId))
 			throw new IllegalArgumentException("unknown userId: " + userId);
 		return new UserRef(this, userId);
