@@ -73,6 +73,13 @@ public interface NetcodeClient {
 	 * up to date.
 	 */
 	String[] getUsers();
+	
+	/**
+	 * Get a userRef for a specific user.
+	 * @param userId
+	 * @return
+	 */
+	UserRef getUserRef(String userId);
 
 	/**
 	 * Returns the current message handler or {@code null} if none is currently

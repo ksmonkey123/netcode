@@ -24,8 +24,8 @@ public class ClientTest {
 			Thread.sleep(500);
 		}
 	}
-	
-	@Test(expected=IllegalArgumentException.class)
+
+	@Test(expected = IllegalArgumentException.class)
 	public void cantSetNegativeTimeout() throws IOException, ConnectionException, InterruptedException {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {
@@ -37,7 +37,7 @@ public class ClientTest {
 			Thread.sleep(500);
 		}
 	}
-	
+
 	@Test
 	public void usersMustSyncWithoutHandler() throws IOException, ConnectionException, InterruptedException {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
@@ -178,6 +178,58 @@ public class ClientTest {
 			Thread.sleep(500);
 		}
 	}
+
+	@Test
+	public void userRefCanBeGeneratedAndAccessed() throws InterruptedException, IOException, ConnectionException {
+		Thread.sleep(1000);
+		NetcodeServer server = new NetcodeServerFactory(8888).start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			ChannelConfiguration config = ChannelConfiguration.builder().bounceMessages(false).build();
+			NetcodeClient client1 = ncf.createChannel("test1", config);
+			Thread.sleep(500);
+			client1.getUserRef("test1").send("Hello There");
+			Thread.sleep(500);
+			Assert.assertEquals("Hello There", (String) client1.receive().getPayload());
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+
+	@Test(expected = NullPointerException.class)
+	public void nullUserRefIsNotOK() throws InterruptedException, IOException, ConnectionException {
+		Thread.sleep(1000);
+		NetcodeServer server = new NetcodeServerFactory(8888).start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			ChannelConfiguration config = ChannelConfiguration.builder().bounceMessages(false).build();
+			NetcodeClient client1 = ncf.createChannel("test1", config);
+			Thread.sleep(500);
+			client1.getUserRef(null);
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+	
+	@Test(expected = IllegalArgumentException.class)
+	public void invalidUserRefIsNotOK() throws InterruptedException, IOException, ConnectionException {
+		Thread.sleep(1000);
+		NetcodeServer server = new NetcodeServerFactory(8888).start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			ChannelConfiguration config = ChannelConfiguration.builder().bounceMessages(false).build();
+			NetcodeClient client1 = ncf.createChannel("test1", config);
+			Thread.sleep(500);
+			client1.getUserRef("test2");
+		} finally {
+			server.close();
+			Thread.sleep(500);
+		}
+	}
+	
+	
 
 	@Test(expected = NullPointerException.class)
 	public void privateMessageToNullIsNotAllowed() throws IOException, ConnectionException, InterruptedException {

@@ -31,6 +31,29 @@ public class ClientQuestionTest {
 	}
 
 	@Test
+	public void testEchoThroughUserRef()
+			throws IOException, ConnectionException, InterruptedException, TimeoutException {
+		NetcodeServer server = new NetcodeServerFactory(8888).start();
+		try {
+			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
+			NetcodeClient client1 = ncf.createChannel("test1", ChannelConfiguration.getDefault());
+			NetcodeClient client2 = ncf.joinChannel("test2", client1.getChannelConfiguration().getChannelId());
+
+			client2.setQuestionHandler((x, y) -> {
+				return y;
+			});
+
+			Thread.sleep(500);
+
+			Assert.assertEquals("test", client1.getUserRef("test2").ask("test"));
+
+		} finally {
+			server.close();
+			Thread.sleep(1000);
+		}
+	}
+
+	@Test
 	public void testTimeoutCleared() throws IOException, ConnectionException, InterruptedException, TimeoutException {
 		NetcodeServer server = new NetcodeServerFactory(8888).start();
 		try {

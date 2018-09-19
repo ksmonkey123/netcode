@@ -341,4 +341,11 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 		return promises.getTimeout();
 	}
 
+	@Override
+	public UserRef getUserRef(String userId) {
+		if (!users.contains(userId))
+			throw new IllegalArgumentException("unknown userId: " + userId);
+		return new UserRef(this, userId);
+	}
+
 }
