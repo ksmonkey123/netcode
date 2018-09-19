@@ -1,6 +1,8 @@
 # Changelog
-_Last updated: 2018/08/17_
+_Last updated: 2018/09/19_
 
+## 2.1.0
+ - Added `UserRef` support.
 
 ## 2.0.1
  - Fixed a Bug where client questions and answers would leak into the normal message processing.
