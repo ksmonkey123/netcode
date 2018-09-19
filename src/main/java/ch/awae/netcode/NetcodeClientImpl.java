@@ -67,6 +67,8 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 			out.flush();
 			userId = request.getUserId();
 
+			List<MessageImpl> questionBacklog = new ArrayList<>();
+
 			// wait for initialization data to arrive
 			while (true) {
 				MessageImpl msg = Parser.json2pojo(in.readLine(), MessageImpl.class);
@@ -83,11 +85,15 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 				} else if (msg.isManagementMessage()) {
 					handleManagementMessage(msg);
 				} else if (msg.getPayload() instanceof ClientQuestion) {
-					handleQuestion(msg);
+					questionBacklog.add(msg);
 				} else {
 					backlog.add(msg);
 				}
 			}
+
+			// work through question backlog
+			while (!questionBacklog.isEmpty())
+				handleQuestion(questionBacklog.remove(0));
 
 			// work through backlog
 			if (messageHandler != null)
@@ -153,13 +159,12 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 			synchronized (HANDLER_LOCK) {
 				if (m.getPayload() instanceof ClientQuestion)
 					handleQuestion(m);
-				if (m.getPayload() instanceof ClientAnswer)
+				else if (m.getPayload() instanceof ClientAnswer)
 					handleAnswer(m);
-				if (messageHandler != null) {
+				else if (messageHandler != null)
 					handleMessage(m);
-				} else {
+				else
 					backlog.add(m);
-				}
 			}
 		}
 	}
@@ -316,6 +321,11 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 		} catch (ConnectionException ce) {
 			throw new RuntimeException(ce);
 		}
+	}
+	
+	@Override
+	public <T extends Serializable> T ask(String userId, Serializable data, Class<T> responseType) throws InterruptedException, TimeoutException {
+	    return responseType.cast(ask(userId, data));
 	}
 
 	@Override
