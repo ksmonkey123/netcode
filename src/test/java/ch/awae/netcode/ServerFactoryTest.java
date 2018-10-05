@@ -113,6 +113,7 @@ public class ServerFactoryTest {
 		new NetcodeServerFactory(8888).runAfterBind(null);
 	}
 
+    @Test
 	public void bindersAreRun() throws IOException, ConnectionException, InterruptedException {
 		NetcodeServer server = null;
 		try {
