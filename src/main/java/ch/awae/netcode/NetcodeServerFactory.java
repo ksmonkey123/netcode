@@ -155,7 +155,7 @@ public final class NetcodeServerFactory {
 	 * 
 	 * this generator will be used whenever a channel gets created.
 	 * 
-	 * @param appIdValidator
+	 * @param channelIdProvider
 	 *            may not be null.
 	 */
 	public void setChannelIdProvider(Supplier<String> channelIdProvider) {
