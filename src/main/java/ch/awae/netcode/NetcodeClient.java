@@ -76,8 +76,6 @@ public interface NetcodeClient {
 	
 	/**
 	 * Get a userRef for a specific user.
-	 * @param userId
-	 * @return
 	 */
 	UserRef getUserRef(String userId);
 
