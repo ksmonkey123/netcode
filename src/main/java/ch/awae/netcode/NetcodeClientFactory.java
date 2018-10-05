@@ -167,7 +167,6 @@ public final class NetcodeClientFactory {
 	 * get a list of all public Netcode channels with at least one free slot.
 	 * 
 	 * @since netcode 2.0.0
-	 * @return
 	 * @throws IOException
 	 * @throws ConnectionException if the server does not support SIMPLE_QUERY (v1
 	 *                             servers) or the server has disabled public
