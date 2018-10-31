@@ -15,3 +15,16 @@ incoming connections based on a provided _appId_, disabling _public channels_ an
 _Netcode_ is implemented in such a way that clients of any version can connect to servers of any version
 and that clients of different versions can join the same channel. When a new client connects to a server
 capability details are exchanged so that a client always knows what features a server supports.
+
+```plantuml
+Alice->Server: (connect)
+Server->Alice: serverCapabilities
+Alice->Server: HandshakeRequest
+Server->Alice: GreetingMessage
+Server->Bob: UserChange: "Alice Joined"
+Alice->Server: Message: "Hello"
+Server->Alice: Message from Alice: "Hello"
+Server->Bob: Message from Alice: "Hello"
+Alice->Server: (disconnect)
+Server->Bob: UserChange: "Alice Left"
+```
