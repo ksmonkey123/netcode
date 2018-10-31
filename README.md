@@ -16,15 +16,20 @@ _Netcode_ is implemented in such a way that clients of any version can connect t
 and that clients of different versions can join the same channel. When a new client connects to a server
 capability details are exchanged so that a client always knows what features a server supports.
 
+## Protocol Description
+In all the following examples it is assumed, that Bob is already connected to the server and all clients are on the same channel.
+### New Client Joins
 ```plantuml
 Alice->Server: (connect)
 Server->Alice: serverCapabilities
 Alice->Server: HandshakeRequest
 Server->Alice: GreetingMessage
 Server->Bob: UserChange: "Alice Joined"
-Alice->Server: Message: "Hello"
-Server->Alice: Message from Alice: "Hello"
-Server->Bob: Message from Alice: "Hello"
+```
+### A Client Disconnects
+```plantuml
 Alice->Server: (disconnect)
 Server->Bob: UserChange: "Alice Left"
 ```
+### Sending Messages
+The following example assumes _bouncing_ to be enabled.
