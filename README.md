@@ -33,3 +33,13 @@ Server->Bob: UserChange: "Alice Left"
 ```
 ### Sending Messages
 The following example assumes _bouncing_ to be enabled.
+```plantuml
+Alice->Server: Message: "Hey Bob!"
+Server->Alice: Message from Alice: "Hey Bob!"
+Server->Bob: Message from Alice: "Hey Bob!"
+Bob->Server: Message: "Hey Alice!"
+Server->Alice: Message from Bob: "Hey Alice!"
+Server->Bob: Message from Bob: "Hey Alice!"
+Alice->Server: PrivateMessage to Bob: "secret"
+Server->Bob: PrivateMessage from Alice: "secret"
+```
