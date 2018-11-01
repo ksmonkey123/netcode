@@ -16,6 +16,7 @@ public class ServerCommandsTest {
 
 	@Test
 	public void canGetChannelInfo() throws IOException, ConnectionException, InterruptedException, TimeoutException {
+	    Thread.sleep(1000);
 		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
 		NetcodeServer server = nsf.start();
 		try {
