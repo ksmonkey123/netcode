@@ -1,22 +1,14 @@
 package ch.awae.netcode;
 
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-
-import javax.net.ServerSocketFactory;
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLServerSocketFactory;
-
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.val;
+
+import javax.net.ServerSocketFactory;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.util.Objects;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Factory for creating netcode server instances.

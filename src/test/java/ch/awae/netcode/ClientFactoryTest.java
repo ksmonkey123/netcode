@@ -63,24 +63,6 @@ public class ClientFactoryTest {
 	}
 
 	@Test(expected = NullPointerException.class)
-	public void socketModeNotNull() {
-		NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
-		ncf.setMode(null, SecurityMode.ANY);
-	}
-
-	@Test(expected = NullPointerException.class)
-	public void securityModeNotNull() {
-		NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
-		ncf.setMode(SocketMode.PLAIN, null);
-	}
-
-	@Test(expected = IllegalArgumentException.class)
-	public void illegalModeCombination() {
-		NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
-		ncf.setMode(SocketMode.PLAIN, SecurityMode.CERTIFICATE);
-	}
-
-	@Test(expected = NullPointerException.class)
 	public void userNotNull() throws IOException, ConnectionException {
 		NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
 		ncf.createChannel(null, ChannelConfiguration.getDefault());
@@ -119,32 +101,6 @@ public class ClientFactoryTest {
 			Assert.assertEquals("test", client.getUserId());
 			Thread.sleep(500);
 			Assert.assertArrayEquals(new String[] { "test" }, client.getUsers());
-		} finally {
-			server.close();
-			Thread.sleep(500);
-		}
-	}
-
-	@Test(expected = SSLHandshakeException.class)
-	public void testIncompatibleSocketModes() throws IOException, ConnectionException, InterruptedException {
-		NetcodeServer server = new NetcodeServerFactory(8888).start();
-		try {
-			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
-			ncf.setMode(SocketMode.SSL, SecurityMode.ANY);
-			ncf.createChannel("test", ChannelConfiguration.getDefault());
-		} finally {
-			server.close();
-			Thread.sleep(500);
-		}
-	}
-
-	@Test(expected = SSLHandshakeException.class)
-	public void testIncompatibleSecurityModes() throws IOException, ConnectionException, InterruptedException {
-		NetcodeServer server = new NetcodeServerFactory(8888).start();
-		try {
-			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
-			ncf.setMode(SocketMode.TLS, SecurityMode.CERTIFICATE);
-			ncf.createChannel("test", ChannelConfiguration.getDefault());
 		} finally {
 			server.close();
 			Thread.sleep(500);
@@ -367,35 +323,5 @@ public class ClientFactoryTest {
 	public void canSetNonNullEventHandler() {
 		new NetcodeClientFactory("localhost", 8888, "myApp").setEventHandler(new ChannelEventHandler() {
 		});
-	}
-
-	@Test(expected = NullPointerException.class)
-	public void canNotAddNullRunner() {
-		new NetcodeClientFactory("localhost", 8888, "myApp").runAfterBind(null);
-	}
-
-	public void bindersAreRun() throws IOException, ConnectionException, InterruptedException {
-		NetcodeServer server = new NetcodeServerFactory(8888).start();
-		try {
-			InvocationTrackingConsumer<Socket> f = new InvocationTrackingConsumer<>();
-			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
-			ncf.runAfterBind(f);
-			ncf.createChannel("test", ChannelConfiguration.getDefault());
-			Thread.sleep(500);
-			Assert.assertTrue(f.run);
-		} finally {
-			server.close();
-			Thread.sleep(500);
-		}
-	}
-}
-
-class InvocationTrackingConsumer<T> implements Consumer<T> {
-	public volatile boolean run = false;
-
-	@Override
-	public void accept(T t) {
-		System.out.println("run");
-		run = true;
 	}
 }

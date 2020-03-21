@@ -1,26 +1,20 @@
 package ch.awae.netcode;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.function.Consumer;
-
-import javax.net.SocketFactory;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.val;
+
+import javax.net.SocketFactory;
+import java.io.IOException;
+import java.net.Socket;
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Factory for creating Netcode clients.
  * 
- * By default clients are created in synchronous mode, without a
- * {@link ChannelEventHandler} and using an anonymous TLS cipher.
+ * By default clients are created in synchronous mode.
  * 
  * Every client provides an application id to the Netcode server. This
  * application id is used to ensure that only compatible clients join a single
@@ -35,12 +29,6 @@ import lombok.val;
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NetcodeClientFactory {
-
-	private SocketMode socketMode = SocketMode.TLS;
-	private SecurityMode securityMode = SecurityMode.ANONYMOUS;
-
-	@Getter(AccessLevel.NONE)
-	private List<Consumer<Socket>> afterBind = new ArrayList<>();
 
 	private MessageHandler messageHandler;
 	private ChannelEventHandler eventHandler;
@@ -66,51 +54,6 @@ public final class NetcodeClientFactory {
 		this.host = host;
 		this.port = port;
 		this.appId = appId;
-	}
-
-	/**
-	 * Adds a function to the post-bind queue.
-	 * 
-	 * The post-bind queue allows access to the {@link Socket} or {@link SSLSocket}
-	 * as soon as it is created (but for SSLSockets before the handshake). This
-	 * allows arbitrary modification of the socket configuration. This is especially
-	 * useful for SSLSockets where more control over the security configuration may
-	 * be desired.
-	 * 
-	 * If the socket mode is set to {@link SocketMode#PLAIN}, the passed socket will
-	 * be of type {@link Socket}, for all other modes it will be a
-	 * {@link SSLSocket}.
-	 * 
-	 * @param runner the runner to add to the post-bind queue. may not be null.
-	 */
-	public NetcodeClientFactory runAfterBind(Consumer<Socket> runner) {
-		Objects.requireNonNull(runner);
-		afterBind.add(runner);
-		return this;
-	}
-
-	/**
-	 * Specifies both the socket mode and the security mode to use for new
-	 * connections. The socket mode specifies if a plain (unencrypted) connection,
-	 * SSL, TLS or both (SSL or TLS) should be used. The security mode specifies for
-	 * secured (TLS/SSL) sockets if an anonymous cipher, a certificate-based cipher
-	 * (or both) is acceptable. This information is used to negociate a cipher that
-	 * is acceptable to both the server and the client.
-	 * 
-	 * If socketMode is set to {@link SocketMode#PLAIN}, then the securityMode must
-	 * be set to {@link SecurityMode#ANY}.
-	 * 
-	 * @throws IllegalArgumentException an illegal combination has been provided
-	 * @throws NullPointerException     any parameter is null
-	 */
-	public NetcodeClientFactory setMode(SocketMode socketMode, SecurityMode securityMode) {
-		Objects.requireNonNull(socketMode);
-		Objects.requireNonNull(securityMode);
-		if (socketMode == SocketMode.PLAIN && securityMode != SecurityMode.ANY)
-			throw new IllegalArgumentException("incompatible securityMode");
-		this.socketMode = socketMode;
-		this.securityMode = securityMode;
-		return this;
 	}
 
 	/**
@@ -178,33 +121,16 @@ public final class NetcodeClientFactory {
 	}
 
 	private NetcodeClientImpl initSocket() throws IOException {
-		SocketFactory sf = (socketMode == SocketMode.PLAIN) ? SocketFactory.getDefault()
-				: SSLSocketFactory.getDefault();
+		SocketFactory sf = SocketFactory.getDefault();
 		Socket s = sf.createSocket(this.host, this.port);
 		s.setKeepAlive(true);
-		if (socketMode != SocketMode.PLAIN)
-			applySecuritySettings((SSLSocket) s);
-		for (val f : afterBind)
-			f.accept(s);
-		if (socketMode != SocketMode.PLAIN)
-			((SSLSocket) s).startHandshake();
-		return new NetcodeClientImpl(s, messageHandler, eventHandler, questionHandler, timeout);
+		ExecutorService threadPool = createThreadPool();
+		return new NetcodeClientImpl(s, messageHandler, eventHandler, questionHandler, timeout, threadPool);
 	}
 
-	private void applySecuritySettings(SSLSocket socket) {
-		List<String> ciphers = new ArrayList<>();
-		for (val c : socket.getSupportedCipherSuites()) {
-			if (socketMode == SocketMode.SSL && !c.startsWith("SSL"))
-				continue;
-			if (socketMode == SocketMode.TLS && !c.startsWith("TLS"))
-				continue;
-			if (securityMode == SecurityMode.CERTIFICATE && c.contains("_anon_"))
-				continue;
-			if (securityMode == SecurityMode.ANONYMOUS && !c.contains("_anon_"))
-				continue;
-			ciphers.add(c);
-		}
-		socket.setEnabledCipherSuites(ciphers.toArray(new String[0]));
+	private ExecutorService createThreadPool() {
+		// TODO: make configurable
+		return Executors.newCachedThreadPool();
 	}
 
 	/**
@@ -238,8 +164,7 @@ public final class NetcodeClientFactory {
 	}
 
 	public NetcodeClientFactory copy() {
-		return new NetcodeClientFactory(socketMode, securityMode, new ArrayList<>(afterBind), messageHandler,
-				eventHandler, questionHandler, timeout, appId, host, port);
+		return new NetcodeClientFactory(messageHandler, eventHandler, questionHandler, timeout, appId, host, port);
 	}
 
 }

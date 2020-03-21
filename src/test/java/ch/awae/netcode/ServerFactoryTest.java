@@ -63,72 +63,13 @@ public class ServerFactoryTest {
 		nsf.setChannelIdProvider(null);
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void badModeConfiguration() {
-		new NetcodeServerFactory(8888).setMode(SocketMode.PLAIN, SecurityMode.CERTIFICATE);
-	}
-
-	@Test
-	public void startAndShutdownTLS() throws IOException, InterruptedException {
-		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
-		nsf.setMode(SocketMode.TLS, SecurityMode.ANY);
-		NetcodeServer server = nsf.start();
-		Thread.sleep(300);
-		server.close();
-		Thread.sleep(300);
-	}
-
-	@Test
-	public void startAndShutdownSecure() throws IOException, InterruptedException {
-		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
-		nsf.setMode(SocketMode.SECURE, SecurityMode.ANY);
-		NetcodeServer server = nsf.start();
-		Thread.sleep(300);
-		server.close();
-		Thread.sleep(300);
-	}
-
-	@Test
-	public void startAndShutdownSSL() throws IOException, InterruptedException {
-		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
-		nsf.setMode(SocketMode.SSL, SecurityMode.ANY);
-		NetcodeServer server = nsf.start();
-		Thread.sleep(300);
-		server.close();
-		Thread.sleep(300);
-	}
-
 	@Test
 	public void startAndShutdownPlain() throws IOException, InterruptedException {
 		NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
-		nsf.setMode(SocketMode.PLAIN, SecurityMode.ANY);
 		NetcodeServer server = nsf.start();
 		Thread.sleep(300);
 		server.close();
 		Thread.sleep(300);
-	}
-
-	@Test(expected = NullPointerException.class)
-	public void cannotAddNullHandler() {
-		new NetcodeServerFactory(8888).runAfterBind(null);
-	}
-
-    @Test
-	public void bindersAreRun() throws IOException, ConnectionException, InterruptedException {
-		NetcodeServer server = null;
-		try {
-			NetcodeServerFactory nsf = new NetcodeServerFactory(8888);
-
-			InvocationTrackingConsumer<ServerSocket> f = new InvocationTrackingConsumer<>();
-			nsf.runAfterBind(f);
-			server = nsf.start();
-			Thread.sleep(500);
-			Assert.assertTrue(f.run);
-		} finally {
-			if (server != null)
-				server.close();
-			Thread.sleep(500);
-		}
 	}
 
 }

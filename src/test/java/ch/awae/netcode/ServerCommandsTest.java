@@ -171,7 +171,6 @@ public class ServerCommandsTest {
 			Thread.sleep(500);
 			
 			NetcodeClientFactory ncf = new NetcodeClientFactory("localhost", 8888, "myApp");
-			ncf.setMode(SocketMode.PLAIN, SecurityMode.ANY);
 			ncf.setTimeout(2000);
 			NetcodeClient c = ncf.createChannel("test", ChannelConfiguration.getDefault());
 			c.getChannelInformation();
