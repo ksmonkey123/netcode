@@ -10,9 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -23,6 +21,9 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	private final Socket socket;
 	private final BufferedReader in;
 	private final PrintWriter out;
+
+	private final ExecutorService asyncThreadPool;
+	private final ExecutorService messageThreadPool = Executors.newSingleThreadExecutor();
 
 	// client/channel information
 	private final List<String> users = new ArrayList<>();
@@ -42,11 +43,12 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	private final PromiseManager promises;
 
 	NetcodeClientImpl(Socket s, MessageHandler messageHandler, ChannelEventHandler eventHandler,
-			ClientQuestionHandler questionHandler, long timeout) throws IOException {
+			ClientQuestionHandler questionHandler, long timeout, ExecutorService asyncThreadPool) throws IOException {
 		this.messageHandler = messageHandler;
 		this.eventHandler = eventHandler;
 		this.questionHandler = questionHandler;
 		this.promises = new PromiseManager(timeout);
+		this.asyncThreadPool = asyncThreadPool;
 		try {
 			this.socket = s;
 			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -125,25 +127,29 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	private void handleManagementMessage(MessageImpl msg) {
 		try {
 			Serializable payload = msg.getPayload();
-			ChannelEventHandler eventHandler = this.eventHandler;
 			if (payload instanceof UserChange) {
-				UserChange data = (UserChange) payload;
-				if (data.isJoined()) {
-					if (!users.contains(data.getUserId()))
-						users.add(data.getUserId());
-					if (eventHandler != null)
-						eventHandler.clientJoined(data.getUserId());
-				} else {
-					users.remove(data.getUserId());
-					if (eventHandler != null)
-						eventHandler.clientLeft(data.getUserId());
-				}
+				handleChannelEvent((UserChange) payload);
 			} else if (payload instanceof ServerCommandResponse) {
 				handleResponseToSC((ServerCommandResponse) payload);
 			}
 		} catch (Exception e) {
 			System.err.println("an error occured while processing event: " + msg);
 			e.printStackTrace();
+		}
+	}
+
+	private void handleChannelEvent(UserChange payload) {
+		ChannelEventHandler eventHandler = this.eventHandler;
+		UserChange data = payload;
+		if (data.isJoined()) {
+			if (!users.contains(data.getUserId()))
+				users.add(data.getUserId());
+			if (eventHandler != null)
+				eventHandler.clientJoined(data.getUserId());
+		} else {
+			users.remove(data.getUserId());
+			if (eventHandler != null)
+				eventHandler.clientLeft(data.getUserId());
 		}
 	}
 
@@ -181,9 +187,9 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 			if (m.getPayload() instanceof ClientAnswer)
 				handleAnswer(m);
 			else if (m.isPrivateMessage())
-				messageHandler.handlePrivateMessage(m, m.getUserId());
+				messageThreadPool.submit(() -> messageHandler.handlePrivateMessage(m, m.getUserId()));
 			else
-				messageHandler.handleMessage(m);
+				messageThreadPool.submit(() -> messageHandler.handleMessage(m));
 		} catch (Exception e) {
 			System.err.println("an error occured while processing a message: " + m);
 			e.printStackTrace();
@@ -191,20 +197,22 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 	}
 
 	private void handleQuestion(MessageImpl m) {
-		ClientQuestion q = (ClientQuestion) m.getPayload();
-		String from = m.getUserId();
-		Serializable payload = null;
-		try {
-			ClientQuestionHandler cqh = this.questionHandler;
-			if (cqh == null)
-				throw new UnsupportedOperationException("no question handler defined");
-			else
-				payload = cqh.handleQuestion(from, q.getData());
-		} catch (Exception e) {
-			payload = e;
-		}
-		out.println(Parser.pojo2json(MessageFactory.privateMessage(this.userId, from, q.response(payload))));
-		out.flush();
+		asyncThreadPool.submit(() -> {
+			ClientQuestion q = (ClientQuestion) m.getPayload();
+			String from = m.getUserId();
+			Serializable payload = null;
+			try {
+				ClientQuestionHandler cqh = this.questionHandler;
+				if (cqh == null)
+					throw new UnsupportedOperationException("no question handler defined");
+				else
+					payload = cqh.handleQuestion(from, q.getData());
+			} catch (Exception e) {
+				payload = e;
+			}
+			out.println(Parser.pojo2json(MessageFactory.privateMessage(this.userId, from, q.response(payload))));
+			out.flush();
+		});
 	}
 
 	@Override
@@ -217,11 +225,7 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 		try {
 			while (!Thread.interrupted()) {
 				try {
-					String m = in.readLine();
-					if (m == null)
-						continue;
-					MessageImpl msg = Parser.json2pojo(m, MessageImpl.class);
-					process(msg);
+					receiveMessage();
 				} catch (IOException e) {
 					break;
 				}
@@ -232,6 +236,14 @@ final class NetcodeClientImpl extends Thread implements NetcodeClient {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+		}
+	}
+
+	private void receiveMessage() throws IOException {
+		String rawMessage = in.readLine();
+		if (rawMessage != null) {
+			MessageImpl msg = Parser.json2pojo(rawMessage, MessageImpl.class);
+			process(msg);
 		}
 	}
 

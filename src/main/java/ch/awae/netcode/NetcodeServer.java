@@ -12,6 +12,6 @@ public interface NetcodeServer {
 	/**
 	 * Terminates the server and disconnects all connected clients.
 	 */
-	public void close();
+	void close();
 
 }
