@@ -27,7 +27,7 @@ class Channel {
 
     private final ConcurrentMap<String, Client> clients = new ConcurrentHashMap<>();
 
-    public Channel(ChannelID id, ChannelFeatures features, ChannelManager channelManager) {
+    Channel(ChannelID id, ChannelFeatures features, ChannelManager channelManager) {
         this.id = id;
         this.features = features;
         this.channelManager = channelManager;
@@ -103,6 +103,10 @@ class Channel {
         if (clientLimit > 0 && clientLimit < newCount) {
             throw new IllegalStateException("channel full");
         }
+    }
+
+    ChannelID getId() {
+        return id;
     }
 
     void removeClient(Client client) {

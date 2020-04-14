@@ -42,6 +42,7 @@ class NetcodeClientImpl extends Thread implements NetcodeClient {
     private ChannelEventHandler eventHandler;
 
     private volatile boolean active = true;
+    private final LocalBindings localBindings;
 
     NetcodeClientImpl(String userId, ProtoClient client, FullChannelInformation channelInformation, MessageHandler messageHandler, QuestionHandler questionHandler, ChannelEventHandler eventHandler) {
         streams = client.getStreams();
@@ -53,6 +54,9 @@ class NetcodeClientImpl extends Thread implements NetcodeClient {
         this.channelInformation = channelInformation;
         users.addAll(Arrays.asList(channelInformation.getUsers()));
         this.threadPool = Executors.newCachedThreadPool();
+        this.localBindings = LocalBindings.createInstance();
+
+        setName("NetcodeClient: " + channelInformation.getChannelId() + "/" + userId);
 
         start();
     }
@@ -256,7 +260,7 @@ class NetcodeClientImpl extends Thread implements NetcodeClient {
 
     @Override
     public LocalBindings getLocalBindings() {
-        return null;
+        return localBindings;
     }
 
     private void verifyUserKnown(String userId) {

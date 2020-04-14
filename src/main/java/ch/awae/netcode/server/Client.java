@@ -20,7 +20,7 @@ class Client extends Thread {
         this.socket = socket;
         this.streams = streams;
         this.channel = channel;
-        setName("Server-Side Client Thread: " + userId);
+        setName("Server-Side Client: " + channel.getId().getChannelId() + "/" + userId);
 
         start();
     }
