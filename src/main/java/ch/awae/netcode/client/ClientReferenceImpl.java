@@ -60,6 +60,7 @@ class ClientReferenceImpl implements ClientReference {
     }
 
     private void verifyActive() {
+        netcodeClient.verifyState();
         if (!active) {
             throw new IllegalStateException("user no longer present: " + userId);
         }

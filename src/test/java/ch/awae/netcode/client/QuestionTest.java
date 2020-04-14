@@ -67,7 +67,7 @@ public class QuestionTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testAskQuestionAfterDisconnect() throws InterruptedException, TimeoutException, ExecutionException {
+    public void testAskQuestionAfterDisconnect() throws InterruptedException {
         ClientReference bob = alice.getClientReference("bob");
 
         this.bob.setQuestionHandler((sender, time, question) -> question.toString().toUpperCase());
@@ -132,5 +132,12 @@ public class QuestionTest {
         resp.get(10, TimeUnit.SECONDS);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testAskQuestionAfterLocalDisconnect() {
+        ClientReference bob_ref = alice.getClientReference("bob");
+
+        alice.disconnect();
+        bob_ref.askQuestion("hi");
+    }
 
 }

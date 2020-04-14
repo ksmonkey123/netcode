@@ -8,6 +8,10 @@ public interface NetcodeClient {
 
     String[] getUsers();
 
+    default String getChannelId() {
+        return getChannelInformation().getChannelId();
+    }
+
     void sendToChannel(Serializable message);
 
     void sendPrivately(String userId, Serializable message);

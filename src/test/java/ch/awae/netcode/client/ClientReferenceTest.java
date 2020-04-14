@@ -74,4 +74,19 @@ public class ClientReferenceTest {
         bob_ref.sendPrivateMessage("hello there");
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testReferenceCannotBeUsedAfterLocalDisconnect() {
+        ClientReference bob_ref = alice.getClientReference("bob");
+        alice.disconnect();
+        assertFalse(bob_ref.isActive());
+        bob_ref.sendPrivateMessage("hello there");
+    }
+
+
+    @Test(expected = IllegalStateException.class)
+    public void testReferenceCannotBeCreatedAfterLocalDisconnect() {
+        alice.disconnect();
+        alice.getClientReference("bob");
+    }
+
 }

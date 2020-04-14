@@ -36,6 +36,8 @@ class NetcodeClientImpl extends Thread implements NetcodeClient {
     private QuestionHandler questionHandler;
     private ChannelEventHandler eventHandler;
 
+    private volatile boolean active = true;
+
     NetcodeClientImpl(String userId, ProtoClient client, FullChannelInformation channelInformation, MessageHandler messageHandler, QuestionHandler questionHandler, ChannelEventHandler eventHandler) {
         streams = client.getStreams();
         socket = client.getSocket();
@@ -81,6 +83,7 @@ class NetcodeClientImpl extends Thread implements NetcodeClient {
                 // TODO: logging
             }
         }
+        active = false;
         threadPool.shutdown();
     }
 
@@ -187,6 +190,7 @@ class NetcodeClientImpl extends Thread implements NetcodeClient {
 
     @Override
     public void sendToChannel(Serializable message) {
+        verifyState();
         writeToStream(buildPacket(null, -1, NetcodePacketType.MESSAGE, message));
     }
 
@@ -204,6 +208,7 @@ class NetcodeClientImpl extends Thread implements NetcodeClient {
 
     @Override
     public void sendPrivately(String userId, Serializable message) {
+        verifyState();
         verifyUserKnown(userId);
         writeToStream(buildPacket(userId, -1, NetcodePacketType.MESSAGE, message));
     }
@@ -216,11 +221,16 @@ class NetcodeClientImpl extends Thread implements NetcodeClient {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        active = false;
+        for (ClientReferenceImpl reference : clientRefs.values()) {
+            reference.disable();
+        }
         threadPool.shutdown();
     }
 
     @Override
     public ClientReference getClientReference(String userId) {
+        verifyState();
         synchronized (users) {
             verifyUserKnown(userId);
             if (clientRefs.containsKey(userId)) {
@@ -230,6 +240,12 @@ class NetcodeClientImpl extends Thread implements NetcodeClient {
                 clientRefs.put(userId, clientReference);
                 return clientReference;
             }
+        }
+    }
+
+    void verifyState() {
+        if (!active) {
+            throw new IllegalStateException("client is inactive and can no longer be used");
         }
     }
 
