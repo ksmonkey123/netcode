@@ -29,4 +29,16 @@ public class ObjectStreams {
         return clazz.cast(read());
     }
 
+    public void close() {
+        try {
+            inputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            outputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

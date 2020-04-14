@@ -22,6 +22,7 @@ class NetcodeServerImpl extends Thread implements NetcodeServer {
         this.appIdValidator = Objects.requireNonNull(appIdValidator);
         this.serverSocket = new ServerSocket(port);
         LOG.info("started netcode server on port " + port);
+        this.setName("NetcodeServer");
         start();
     }
 

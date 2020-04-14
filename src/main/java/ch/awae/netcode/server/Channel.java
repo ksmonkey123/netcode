@@ -26,7 +26,6 @@ class Channel {
     private final Lock UPDATE_LOCK;
 
     private final ConcurrentMap<String, Client> clients = new ConcurrentHashMap<>();
-    private final AtomicInteger clientCount = new AtomicInteger(0);
 
     public Channel(ChannelID id, ChannelFeatures features, ChannelManager channelManager) {
         this.id = id;
@@ -99,10 +98,9 @@ class Channel {
     }
 
     private void enforceClientLimit() {
-        int newCount = clientCount.incrementAndGet();
+        int newCount = clients.size();
         int clientLimit = features.getClientLimit();
         if (clientLimit > 0 && clientLimit < newCount) {
-            clientCount.decrementAndGet();
             throw new IllegalStateException("channel full");
         }
     }
@@ -122,9 +120,8 @@ class Channel {
 
     private void doRemoveClient(String userId) {
         clients.remove(userId);
-        int newCount = clientCount.decrementAndGet();
         sendPublicly(new UserChangeMessageImpl(userId, false));
-        if (newCount <= 0) {
+        if (clients.isEmpty()) {
             closeChannel();
         }
     }
@@ -137,9 +134,11 @@ class Channel {
         UPDATE_LOCK.lock();
         try {
             clients.forEach((id, client) -> {
+                client.terminate();
                 client.interrupt();
                 try {
                     client.getSocket().close();
+                    client.closeStreams();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

@@ -13,19 +13,21 @@ class Client extends Thread {
     private final Socket socket;
     private final ObjectStreams streams;
     private final Channel channel;
+    private volatile boolean active = true;
 
     Client(String userId, Socket socket, ObjectStreams streams, Channel channel) {
         this.userId = userId;
         this.socket = socket;
         this.streams = streams;
         this.channel = channel;
+        setName("Server-Side Client Thread: " + userId);
 
         start();
     }
 
     @Override
     public void run() {
-        while(!Thread.interrupted()) {
+        while(!Thread.interrupted() && active) {
             try {
                 NetcodePacket packet = streams.read(NetcodePacket.class);
                 if (packet != null) {
@@ -37,12 +39,13 @@ class Client extends Thread {
                 }
             } catch (IOException e) {
                 // stream issue - kill client
-                channel.removeClient(this);
+                e.printStackTrace();
+                break;
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
-
         }
+        channel.removeClient(this);
     }
 
     void send(Serializable message) {
@@ -65,7 +68,15 @@ class Client extends Thread {
         }
     }
 
-    public Socket getSocket() {
+    Socket getSocket() {
         return socket;
+    }
+
+    void closeStreams() {
+        streams.close();
+    }
+
+    void terminate() {
+        active = false;
     }
 }

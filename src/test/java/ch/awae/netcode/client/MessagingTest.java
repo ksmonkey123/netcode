@@ -128,7 +128,7 @@ public class MessagingTest {
             alice.sendToChannel(i);
         }
 
-        assertTrue(semaphore.tryAcquire(1, TimeUnit.SECONDS));
+        assertTrue(semaphore.tryAcquire(10, TimeUnit.SECONDS));
         assertFalse(errorFlag.get());
         assertEquals(MESSAGE_COUNT, nextId.get());
     }
