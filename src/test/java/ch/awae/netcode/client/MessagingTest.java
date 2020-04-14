@@ -100,7 +100,7 @@ public class MessagingTest {
     @Test
     public void testMessagesArriveInOrder() throws InterruptedException {
 
-        final int MESSAGE_COUNT = 10000;
+        final int MESSAGE_COUNT = 1000;
 
         AtomicInteger nextId = new AtomicInteger(0);
         AtomicBoolean errorFlag = new AtomicBoolean(false);
@@ -110,6 +110,9 @@ public class MessagingTest {
         bob.setMessageHandler((sender, timestamp, message) -> {
             int value = (int) message;
             boolean ok = nextId.compareAndSet(value, value + 1);
+            if (value % 100 == 0) {
+                System.out.println("receiving message " + value);
+            }
             if (!ok) {
                 errorFlag.set(true);
             }
@@ -119,6 +122,9 @@ public class MessagingTest {
         });
 
         for (int i = 0; i < MESSAGE_COUNT; i++) {
+            if (i % 100 == 0) {
+                System.out.println("sending message " + i);
+            }
             alice.sendToChannel(i);
         }
 

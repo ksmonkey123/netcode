@@ -1,5 +1,7 @@
 package ch.awae.netcode.client;
 
+import ch.awae.netcode.client.binding.RemoteBindings;
+
 import java.io.Serializable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -75,6 +77,11 @@ class ClientReferenceImpl implements ClientReference {
     @Override
     public boolean isActive() {
         return active;
+    }
+
+    @Override
+    public RemoteBindings getRemoteBindings() {
+        return null;
     }
 
     void disable() {

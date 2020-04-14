@@ -1,5 +1,6 @@
 package ch.awae.netcode.client;
 
+import ch.awae.netcode.client.binding.LocalBindings;
 import ch.awae.netcode.exception.NetcodeException;
 import ch.awae.netcode.internal.FullChannelInformation;
 import ch.awae.netcode.internal.NetcodePacket;
@@ -18,8 +19,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 class NetcodeClientImpl extends Thread implements NetcodeClient {
+
+    private final static Logger LOG = Logger.getLogger(NetcodeClientImpl.class.getName());
 
     private final ObjectStreams streams;
     private final Socket socket;
@@ -80,7 +85,7 @@ class NetcodeClientImpl extends Thread implements NetcodeClient {
                     ex.printStackTrace();
                 }
             } catch (ClassNotFoundException | SerializationException e) {
-                // TODO: logging
+                LOG.log(Level.WARNING, "an error occured while processsing incoming message", e);
             }
         }
         active = false;
@@ -247,6 +252,11 @@ class NetcodeClientImpl extends Thread implements NetcodeClient {
         if (!active) {
             throw new IllegalStateException("client is inactive and can no longer be used");
         }
+    }
+
+    @Override
+    public LocalBindings getLocalBindings() {
+        return null;
     }
 
     private void verifyUserKnown(String userId) {

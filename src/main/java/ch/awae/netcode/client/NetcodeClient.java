@@ -1,5 +1,7 @@
 package ch.awae.netcode.client;
 
+import ch.awae.netcode.client.binding.LocalBindings;
+
 import java.io.Serializable;
 
 public interface NetcodeClient {
@@ -25,5 +27,7 @@ public interface NetcodeClient {
     void disconnect();
 
     ClientReference getClientReference(String userId);
+
+    LocalBindings getLocalBindings();
 
 }

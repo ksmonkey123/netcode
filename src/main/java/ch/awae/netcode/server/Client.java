@@ -32,14 +32,14 @@ class Client extends Thread {
                     try {
                         processPacket(packet);
                     } catch (RuntimeException e) {
-                        // TODO: logging
+                        e.printStackTrace();
                     }
                 }
             } catch (IOException e) {
                 // stream issue - kill client
                 channel.removeClient(this);
             } catch (ClassNotFoundException e) {
-                // TODO: logging
+                e.printStackTrace();
             }
 
         }
@@ -49,7 +49,7 @@ class Client extends Thread {
         try {
             streams.write(message);
         } catch (IOException e) {
-            // TODO: logging
+            e.printStackTrace();
         }
     }
 

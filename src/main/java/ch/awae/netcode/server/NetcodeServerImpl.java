@@ -60,7 +60,7 @@ class NetcodeServerImpl extends Thread implements NetcodeServer {
             Socket client = serverSocket.accept();
             handleClient(client);
         } catch (IOException e) {
-            // TODO: logging
+            e.printStackTrace();
         }
     }
 

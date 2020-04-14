@@ -141,7 +141,7 @@ class Channel {
                 try {
                     client.getSocket().close();
                 } catch (IOException e) {
-                    // TODO: logging
+                    e.printStackTrace();
                 }
             });
         } finally {

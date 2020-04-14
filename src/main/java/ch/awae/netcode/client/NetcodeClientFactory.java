@@ -115,7 +115,7 @@ public class NetcodeClientFactory {
             try {
                 client.getSocket().close();
             } catch (IOException ex) {
-                // TODO: logging
+                ex.printStackTrace();
             }
         }
         throw new HandshakeException(e);
