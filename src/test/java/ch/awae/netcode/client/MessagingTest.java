@@ -100,7 +100,7 @@ public class MessagingTest {
     @Test
     public void testMessagesArriveInOrder() throws InterruptedException {
 
-        final int MESSAGE_COUNT = 1000;
+        final int MESSAGE_COUNT = 10000;
 
         AtomicInteger nextId = new AtomicInteger(0);
         AtomicBoolean errorFlag = new AtomicBoolean(false);
